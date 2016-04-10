@@ -5,7 +5,6 @@
  */
 package carlearndriveenn;
 
-import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -26,15 +25,8 @@ public class Simulator extends JFrame{
         Drawing draw = new Drawing(car);
         add(draw);
         
-        ActionListener taskPerformer = new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                    draw.repaint();
-                    System.out.println("hello");
-            }
-        };
-        javax.swing.Timer t = new javax.swing.Timer(1/60 * 1000, taskPerformer);
-        t.setRepeats(false);
-        t.start();
+        Thread thDraw = new Thread(draw);
+        thDraw.start();
         
         draw.addKeyListener(new KeyAdapter() {
             public void KeyPressed(KeyEvent evt){
@@ -50,7 +42,9 @@ public class Simulator extends JFrame{
             }
         }
         
-        //Physics physics = new Physics(car,draw.getVecInBorder(),draw.getVecOutBorder(),draw.getRoadSize());
+        Physics physics = new Physics(car,draw.getVecInBorder(),draw.getVecOutBorder(),draw.getRoadSize());
+        Thread th = new Thread(physics);
+        th.start();
 
         setTitle("Points");
         setSize(1200, 700);

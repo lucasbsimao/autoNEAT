@@ -19,8 +19,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
 
-class Drawing extends JPanel{
-    
+class Drawing extends JPanel implements Runnable{
     private final float roadSize;
     private CarProperties carProp;
     
@@ -47,7 +46,7 @@ class Drawing extends JPanel{
         posImageCar = new Vec2(-1,-1);
         carProp.setPosition(new Vec2(160,60));
         carProp.setAngle(0);
-        
+
         loadImages();
         createPath();
     }
@@ -311,5 +310,38 @@ class Drawing extends JPanel{
     
     public ArrayList<Vec2> getVecMidPoints(){
         return midPoints;
+    }
+
+    @Override
+    public void run() {
+      final double GAME_HERTZ = 30.0;
+      final double TIME_BETWEEN_UPDATES = 1000000000 / GAME_HERTZ;
+      //We will need the last update time.
+      double lastUpdateTime = System.nanoTime();
+      //Store the last time we rendered.
+      double lastRenderTime = System.nanoTime();
+      
+      //If we are able to get as high as this FPS, don't render again.
+      final double TARGET_FPS = 60;
+      final double TARGET_TIME_BETWEEN_RENDERS = 1000000000 / TARGET_FPS;
+      
+      //Simple way of finding FPS.
+      
+        while (true)
+        {
+            double now = System.nanoTime();
+
+            while( now - lastUpdateTime > TIME_BETWEEN_UPDATES)
+            {
+                this.repaint();
+                lastRenderTime = now;
+                while ( now - lastRenderTime < TARGET_TIME_BETWEEN_RENDERS)
+                {
+                   Thread.yield();
+                   try {Thread.sleep(1);} catch(Exception e) {} 
+                   now = System.nanoTime();
+                }
+            }
+        }
     }
 }

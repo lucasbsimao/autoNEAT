@@ -20,6 +20,7 @@ public class Physics implements Runnable{
     private ArrayList<Vec2> inBoard;
     private ArrayList<Vec2> outBoard;
     private float roadSize;
+    private boolean completeStep;
     
     private final double timeStep;
 
@@ -28,6 +29,7 @@ public class Physics implements Runnable{
         this.outBoard = outBoard;
         this.inBoard = inBoard;
         this.carProp = carProp;
+        this.completeStep = false;
         
         timeStep = 1/60;
     }
@@ -63,11 +65,27 @@ public class Physics implements Runnable{
         while(true){
             try {
                 Thread.sleep((long) (timeStep*1000));
+                System.out.println((long) (timeStep*1000));
             } catch (InterruptedException ex) {
                 Logger.getLogger(Physics.class.getName()).log(Level.SEVERE, null, ex);
             }
             
             stepSimulation(timeStep);
+            setCompleteStep(true);
         }
+    }
+
+    /**
+     * @return the completeStep
+     */
+    public boolean isCompleteStep() {
+        return completeStep;
+    }
+
+    /**
+     * @param completeStep the completeStep to set
+     */
+    public void setCompleteStep(boolean completeStep) {
+        this.completeStep = completeStep;
     }
 }
