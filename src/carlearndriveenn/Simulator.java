@@ -42,7 +42,7 @@ public class Simulator extends JFrame{
             }
         }
         
-        Physics physics = new Physics(car,draw.getVecInBorder(),draw.getVecOutBorder(),draw.getRoadSize());
+        Physics physics = new Physics(car,draw.getVecInBorder(),draw.getVecOutBorder(),draw.getVecMidPoints(),draw.getRoadSize());
         Thread th = new Thread(physics);
         th.start();
 

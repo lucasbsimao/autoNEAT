@@ -34,6 +34,7 @@ class Drawing extends JPanel implements Runnable{
     private ArrayList<Vec2> vecOutBorder;
     private ArrayList<Vec2> vecInBorder;
     private ArrayList<Vec2> midPoints;
+    private ArrayList<Vec2> roadEdgePoints;
 
     private ArrayList<Vec2> finishCoords;
     
@@ -70,6 +71,7 @@ class Drawing extends JPanel implements Runnable{
             
             createBorders();
             createFinishBorders();
+            
         }catch(Exception ex){
             System.out.println(ex.toString());
         } 
@@ -99,19 +101,17 @@ class Drawing extends JPanel implements Runnable{
             lstUVec.y = 0;
         }
         
-        
         float loadingStreet = 0;
         while(loadingStreet < streetLenght){
-            loadingStreet += bicar.getHeight()/2;
-            if(loadingStreet > streetLenght)
-                loadingStreet = streetLenght - (loadingStreet - bicar.getHeight()/2); 
-            Vec2 lstDirVec = new Vec2(lstUVec);
-            lstDirVec.mulLocal(streetLenght);
+            loadingStreet += carProp.getWidth() < carProp.getHeight() ? carProp.getHeight()/2 : carProp.getWidth()/2;
+            if(loadingStreet >= streetLenght)
+                loadingStreet = streetLenght;
             
+            Vec2 lstDirVec = new Vec2(lstUVec);
+            lstDirVec.mulLocal(loadingStreet);   
             Vec2 finStPoint = new Vec2(vecIni.add(lstDirVec));
             midPoints.add(finStPoint);
         }
-        
         
         addCurvePoints(lstUVec,midPoints.get(midPoints.size()-1), midRay,degrees);
     }
@@ -131,7 +131,7 @@ class Drawing extends JPanel implements Runnable{
         
         rayDir.rotate(Vec2.PI);
         
-        int i = 0;
+        int i = 5;
         while(i <= Math.abs(degrees)){
             int moveDir = i;
             
@@ -144,7 +144,11 @@ class Drawing extends JPanel implements Runnable{
             
             midPoints.add(actCurvePoint);
             
-            i++;
+            i+=5;
+            if(i > Math.abs(degrees) && i != Math.abs(degrees)+5)
+                i = Math.abs(degrees);
+            
+            System.out.println(i);
         }
         
         rayDir.normalize();
@@ -175,10 +179,12 @@ class Drawing extends JPanel implements Runnable{
             uVec.rotate(Vec2.PI);
             if(i == 0)vecInBorder.add(new Vec2(uVec.add(vec1)));
             vecInBorder.add(new Vec2(uVec.add(vec2)));
+            
         }
     }
     
     private void createFinishBorders(){
+        roadEdgePoints = new ArrayList<>();
         finishCoords = new ArrayList<>();
         
         Vec2 uFinishLine = new Vec2(midPoints.get(midPoints.size()-1));
@@ -191,13 +197,13 @@ class Drawing extends JPanel implements Runnable{
         finishCoords.add(vecInBorder.get(vecInBorder.size()-1));
         finishCoords.add(vecInBorder.get(vecInBorder.size()-1).add(ptFinishLine));
         
-        vecOutBorder.add(vecInBorder.get(vecInBorder.size()-1));
+        roadEdgePoints.add(midPoints.get(0));
+
+        roadEdgePoints.addAll(vecOutBorder);
         
-        ArrayList<Vec2> arrayAux = new ArrayList<>();
-        arrayAux.add(vecInBorder.get(0));
-        arrayAux.addAll(vecOutBorder);
-        
-        vecOutBorder = arrayAux;
+        for(int i = vecInBorder.size()-1; i >= 0;i--){
+            roadEdgePoints.add(vecInBorder.get(i));
+        }
     }
 
     private void loadImages() {
@@ -205,6 +211,7 @@ class Drawing extends JPanel implements Runnable{
         try {
             bigrass = ImageIO.read(new File("Images/grama-1.jpg"));
             bicar = ImageIO.read(new File("Images/car2d2.png"));
+            carProp.setCarDimensions(bicar.getWidth(), bicar.getHeight());
             biground = ImageIO.read(new File("Images/areia.jpg"));
             bifinish = ImageIO.read(new File("Images/finish.png"));
         } catch (IOException ex) {
@@ -227,11 +234,7 @@ class Drawing extends JPanel implements Runnable{
         
         g2d.setPaint(groundtp);
         
-        createFinishLine(g2d, vecOutBorder);
-        
-        g2d.setPaint(grasstp);
-        
-        createFinishLine(g2d, vecInBorder);
+        createFinishLine(g2d, roadEdgePoints);
         
         g2d.setPaint(finishtp);
         
@@ -269,8 +272,6 @@ class Drawing extends JPanel implements Runnable{
         
         posImageCar.x = carProp.getPosition().x-(int)(locationX)-(int)(correctUx*diff);
         posImageCar.y = carProp.getPosition().y-(int)(locationY)-(int)(correctUy*diff);
-        
-        System.out.println(carProp.getPosition().x);
         
         carTrans = new AffineTransform();
         carTrans.translate(correctUx*diff, correctUy*diff);
@@ -314,18 +315,12 @@ class Drawing extends JPanel implements Runnable{
 
     @Override
     public void run() {
-      final double GAME_HERTZ = 30.0;
-      final double TIME_BETWEEN_UPDATES = 1000000000 / GAME_HERTZ;
-      //We will need the last update time.
-      double lastUpdateTime = System.nanoTime();
-      //Store the last time we rendered.
-      double lastRenderTime = System.nanoTime();
-      
-      //If we are able to get as high as this FPS, don't render again.
-      final double TARGET_FPS = 60;
-      final double TARGET_TIME_BETWEEN_RENDERS = 1000000000 / TARGET_FPS;
-      
-      //Simple way of finding FPS.
+        final double GAME_HERTZ = 30.0;
+        final double TIME_BETWEEN_UPDATES = 1000000000 / GAME_HERTZ;
+        double lastUpdateTime = System.nanoTime();
+        double lastRenderTime = System.nanoTime();
+        final double TARGET_FPS = 60;
+        final double TARGET_TIME_BETWEEN_RENDERS = 1000000000 / TARGET_FPS;
       
         while (true)
         {
