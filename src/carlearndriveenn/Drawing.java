@@ -45,8 +45,6 @@ class Drawing extends JPanel implements Runnable{
         carProp = car;
         roadSize = 50;
         posImageCar = new Vec2(-1,-1);
-        carProp.setPosition(new Vec2(160,60));
-        carProp.setAngle(0);
 
         loadImages();
         createPath();
@@ -147,8 +145,6 @@ class Drawing extends JPanel implements Runnable{
             i+=5;
             if(i > Math.abs(degrees) && i != Math.abs(degrees)+5)
                 i = Math.abs(degrees);
-            
-            System.out.println(i);
         }
         
         rayDir.normalize();
@@ -242,13 +238,22 @@ class Drawing extends JPanel implements Runnable{
    
         transformCar();
         
+        g2d.setStroke(new BasicStroke(2));
+        ArrayList<Sensor> sensors = carProp.getSensorsVec();
+        if(sensors != null){
+            for(int i = 0; i < carProp.getSensorsVec().size();i++){
+                Sensor sens = sensors.get(i);
+                float stage = sens.getSensorStage();
+                g2d.setPaint(new Color(1, 1-stage, 1-stage));
+                Vec2 sensPos = sens.getSensorStartPosition();
+                Vec2 sensFinPos = sensPos.add(sens.getSensorUnitVec().mul(sens.getSensorLength()));
+                g2d.draw(new Line2D.Float((int)sensPos.x, (int)sensPos.y, (int)sensFinPos.x,(int)sensFinPos.y));
+            }
+        }
         
         AffineTransformOp op = new AffineTransformOp(carTrans, AffineTransformOp.TYPE_BILINEAR);
         // Drawing the rotated image at the required drawing locations
         g2d.drawImage(op.filter(bicar, null), (int)posImageCar.x, (int)posImageCar.y, null);
-        
-        g2d.setPaint(Color.blue);
-        //g2d.drawLine((int)posCar.x, (int)posCar.y, (int)posCar.x+10, (int)posCar.y+10);
         
         g2d.dispose();
     }

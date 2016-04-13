@@ -21,7 +21,7 @@ public class Simulator extends JFrame{
     Timer timer;
 
     public void initUI() {
-        CarProperties car = new CarProperties();
+        CarProperties car = new CarProperties(0,new Vec2(160,60));
         Drawing draw = new Drawing(car);
         add(draw);
         

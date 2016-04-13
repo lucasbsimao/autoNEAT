@@ -17,19 +17,18 @@ public class CarProperties {
     private Vec2 position;
     private float angle;
     private Vec2 frontVec;
-    private ArrayList<Vec2> sensorsVec;
+    private ArrayList<Sensor> sensorsVec;
     private Vec2 linVelocity;
     private float angVelocity;
     
     private boolean hasCrashed;
     
-    public CarProperties(){
-        position = new Vec2(-1,-1);
-        frontVec = new Vec2(0,0);
-        sensorsVec = new ArrayList<>(5);
-        linVelocity = new Vec2(0,0);
+    public CarProperties(float initAng, Vec2 initPos){
+        sensorsVec = new ArrayList();
+        position = initPos;
+        this.setAngle(initAng);
+        linVelocity = new Vec2(10,-2);
         angVelocity = 0.0F;
-        angle = 0;
         
         hasCrashed = false;
     }
@@ -116,10 +115,36 @@ public class CarProperties {
      * @param angle the angle to set
      */
     public void setAngle(float angle) {
+        if(sensorsVec != null) sensorsVec.clear();
         Vec2 front = new Vec2();
         front.x = (float)Math.cos(Math.toRadians(angle));
         front.y = (float)Math.sin(Math.toRadians(angle));
         this.frontVec = front;
         this.angle = angle;
+        
+        Vec2 sideVec = new Vec2(frontVec.rotated(-Vec2.PI/2));
+        float sensorInterval = Vec2.PI/5;
+        
+        float sensParam = this.width < this.height ? this.width : this.height;
+        float actSensAng = 0;
+        while(actSensAng <= Vec2.PI){
+            Sensor sens = new Sensor();
+            sens.setSensorLength(sensParam);
+            Vec2 vecActSensPt = sideVec.rotated(actSensAng);
+            sens.setSensorUnitVec(new Vec2(vecActSensPt));
+            Vec2 sensorPt = vecActSensPt.mul(sensParam);
+            sens.setSensorStartPosition(this.position.add(frontVec.mul(sensParam)));
+            
+            sensorsVec.add(sens);
+            
+            actSensAng += sensorInterval;
+        }
+    }
+
+    /**
+     * @return the sensorsVec
+     */
+    public ArrayList<Sensor> getSensorsVec() {
+        return sensorsVec;
     }
 }

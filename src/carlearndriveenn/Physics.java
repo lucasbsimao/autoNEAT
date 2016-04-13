@@ -38,7 +38,8 @@ public class Physics implements Runnable{
     
     public void stepSimulation(float timeStep){
         calculateCarPosition(timeStep);
-        hasCollided();
+        calculateCarSensorStage();
+        detectCollision();
     }
     
     private void calculateCarPosition(float timeStep){
@@ -50,45 +51,29 @@ public class Physics implements Runnable{
         carProp.setAngle(carProp.getAngle()+deltaAngle);
     }
     
-    public boolean hasCollided(){
+    public void detectCollision(){
         ArrayList<Vec2> carEdgePts = searchCarEdgePts();
         
         ArrayList<Vec2> nearRoadEdgePts = new ArrayList<>();
         ArrayList<Vec2> nearRoadMidPts = new ArrayList<>();
         for(int i = 0; i < carEdgePts.size();i++){
-            float nearestDist = 9999;
-            Vec2 nearestPt = null;
-            int id = 0;
-            for(int j = 0; j < inEdge.size();j++){
-                Vec2 vecDist = carEdgePts.get(i).sub(inEdge.get(j));
-                if(vecDist.length() < nearestDist){
-                    nearestDist = vecDist.length();
-                    nearestPt = new Vec2(inEdge.get(j));
-                    id = j;
-                }
-            }
-            
-            for(int j = 0; j < outEdge.size();j++){
-                Vec2 vecDist = carEdgePts.get(i).sub(outEdge.get(j));
-                if(vecDist.length() < nearestDist){
-                    nearestDist = vecDist.length();
-                    nearestPt = new Vec2(outEdge.get(j));
-                    id = j;
-                }
-            }
+            Vec2 nearestPt = searchNearPointRoadEdge(carEdgePts.get(i));
 
             if(nearestPt != null)nearRoadEdgePts.add(nearestPt);
+            
+            int id = -1;
+            if(inEdge.contains(nearestPt)) id = inEdge.indexOf(nearestPt);
+            else id = outEdge.indexOf(nearestPt);
             nearRoadMidPts.add(midPoints.get(id));
         }
 
         for(int i = 0; i < carEdgePts.size();i++){
             if(tangentCollision(nearRoadMidPts.get(i),nearRoadEdgePts.get(i),carEdgePts.get(i))){
                 carProp.setPosition(new Vec2(160,60));
+                carProp.setCrashed(true);
                 break;
             }
         }
-        
-        return false;
     }
     
     private boolean tangentCollision(Vec2 midPoint, Vec2 edgePoint,Vec2 carEdgePoint){
@@ -98,11 +83,6 @@ public class Physics implements Runnable{
         Vec2 relCarMidPt = carEdgePoint.sub(edgePoint);
         relCarMidPt.normalize();
         float absRad = (float) Math.abs(normalVec.angle(relCarMidPt));
-        System.out.println("Calculo");
-        System.out.println(Math.toDegrees(absRad));
-        System.out.println(midPoint);
-        System.out.println(edgePoint);
-        System.out.println(carEdgePoint);
         if(absRad > Vec2.PI/2){
             return true;
         }
@@ -150,6 +130,85 @@ public class Physics implements Runnable{
         carEdgePt.add(new Vec2(edgePt));
         
         return carEdgePt;
+    }
+    
+    private void calculateCarSensorStage() {
+        ArrayList<Sensor> carSensors = carProp.getSensorsVec();
+        for(int i = 0; i < carSensors.size();i++){
+            Sensor sens = carSensors.get(i);
+            Vec2 sensorFinPt = sens.getSensorStartPosition().add(sens.getSensorUnitVec().mul(sens.getSensorLength()));
+            Vec2 nearestPt = searchNearPointRoadEdge(sensorFinPt);
+            
+            Vec2 axisXUVec = defineSensorRelativeCoordinate(sens,nearestPt);
+            Vec2 axisYUVec = null;
+            if(outEdge.contains(nearestPt)) 
+                axisYUVec = new Vec2(axisXUVec.rotated(-Vec2.PI/2));
+            else
+                axisYUVec = new Vec2(axisXUVec.rotated(Vec2.PI/2));
+            
+            Vec2 relPosSensIniEdge = sens.getSensorStartPosition().sub(nearestPt);
+            Vec2 relPosSensFinEdge = sensorFinPt.sub(nearestPt);
+            
+            if(axisYUVec.angle(relPosSensFinEdge) > Vec2.PI/2){
+                sens.setSensorStage(0);
+            }else{
+                float radsSensUVecToXUVec = axisXUVec.angle(sens.getSensorUnitVec());
+                float radsSensIniToXUVec = axisXUVec.angle(relPosSensIniEdge);
+                
+                float localYCompLen = (float)Math.abs(sens.getSensorLength()*Math.sin(radsSensUVecToXUVec));
+                float localYCompRemainLen = (float)Math.abs(relPosSensIniEdge.length()*Math.sin(radsSensIniToXUVec));
+                
+                float remainLenght = (float)Math.abs(localYCompLen - localYCompRemainLen);
+                float percRemainLen = remainLenght/localYCompLen;
+                
+                sens.setSensorStage(percRemainLen);
+            }
+        }
+    }
+
+    private Vec2 searchNearPointRoadEdge(Vec2 refPt){
+            float nearestDist = 9999;
+            Vec2 nearestPt = null;
+            int id = 0;
+            for(int j = 0; j < inEdge.size();j++){
+                Vec2 vecDist = refPt.sub(inEdge.get(j));
+                if(vecDist.length() < nearestDist){
+                    nearestDist = vecDist.length();
+                    nearestPt = new Vec2(inEdge.get(j));
+                }
+            }
+            
+            for(int j = 0; j < outEdge.size();j++){
+                Vec2 vecDist = refPt.sub(outEdge.get(j));
+                if(vecDist.length() < nearestDist){
+                    nearestDist = vecDist.length();
+                    nearestPt = new Vec2(outEdge.get(j));
+                }
+            }
+        
+        return nearestPt;
+    }
+    
+    public Vec2 defineSensorRelativeCoordinate(Sensor sens, Vec2 edgeNearPt){
+        Vec2 sensorFinPt = sens.getSensorStartPosition().add(sens.getSensorUnitVec().mul(sens.getSensorLength()));
+        
+        ArrayList<Vec2> edge;
+        if(inEdge.contains(edgeNearPt)) edge = inEdge;
+        else edge = outEdge;
+        
+        int id = edge.indexOf(edgeNearPt);
+        
+        Vec2 relPosSensFinEdge = sensorFinPt.sub(edgeNearPt);
+        Vec2 axisUVec = edge.get(id+1).sub(edgeNearPt);
+        
+        float diffRads = axisUVec.angle(relPosSensFinEdge);
+        if(diffRads > Vec2.PI/2 && id != 0)
+            axisUVec = edgeNearPt.sub(edge.get(id-1));
+        
+        axisUVec.normalize();
+        
+        
+        return axisUVec;
     }
 
     @Override
