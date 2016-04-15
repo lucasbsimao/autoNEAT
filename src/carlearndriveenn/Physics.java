@@ -45,6 +45,8 @@ public class Physics implements Runnable{
     private void calculateCarPosition(float timeStep){
         Vec2 deltaPosition = carProp.getLinVelocity().mul(timeStep);
         
+        carProp.setTravelledDist(carProp.getTravelledDist()+deltaPosition.length());
+        
         carProp.setPosition(carProp.getPosition().add(deltaPosition));
         
         float deltaAngle = carProp.getAngVelocity()*timeStep;

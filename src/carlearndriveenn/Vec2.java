@@ -97,6 +97,10 @@ public class Vec2 implements Serializable {
     return new Vec2(x * a, y * a);
   }
   
+  public final Vec2 div(float a) {
+    return new Vec2(x / a, y / a);
+  }
+  
   public final Vec2 dot(Vec2 a) {
     return new Vec2(x * a.x, y * a.y);
   }
@@ -138,6 +142,12 @@ public class Vec2 implements Serializable {
   public final Vec2 mulLocal(float a) {
     x *= a;
     y *= a;
+    return this;
+  }
+  
+  public final Vec2 divLocal(float a) {
+    this.x /= a;
+    this.y /= a;
     return this;
   }
 

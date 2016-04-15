@@ -252,7 +252,7 @@ class Drawing extends JPanel implements Runnable{
         }
         
         AffineTransformOp op = new AffineTransformOp(carTrans, AffineTransformOp.TYPE_BILINEAR);
-        // Drawing the rotated image at the required drawing locations
+
         g2d.drawImage(op.filter(bicar, null), (int)posImageCar.x, (int)posImageCar.y, null);
         
         g2d.dispose();

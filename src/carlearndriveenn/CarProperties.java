@@ -20,6 +20,7 @@ public class CarProperties {
     private ArrayList<Sensor> sensorsVec;
     private Vec2 linVelocity;
     private float angVelocity;
+    private float travelledDist;
     
     private boolean hasCrashed;
     
@@ -29,6 +30,7 @@ public class CarProperties {
         this.setAngle(initAng);
         linVelocity = new Vec2(10,-2);
         angVelocity = 0.0F;
+        travelledDist = 0.0F;
         
         hasCrashed = false;
     }
@@ -146,5 +148,19 @@ public class CarProperties {
      */
     public ArrayList<Sensor> getSensorsVec() {
         return sensorsVec;
+    }
+
+    /**
+     * @return the travelledDist
+     */
+    public float getTravelledDist() {
+        return travelledDist;
+    }
+
+    /**
+     * @param travelledDist the travelledDist to set
+     */
+    public void setTravelledDist(float travelledDist) {
+        this.travelledDist = travelledDist;
     }
 }
