@@ -5,15 +5,18 @@
  */
 package mlalgorithm;
 
+import utils.Vec2;
 import java.util.ArrayList;
 import carlearndriveenn.*;
+import java.util.Collections;
 import java.util.Random;
+import mlalgorithm.NeuralNetwork.*;
 
 /**
  *
  * @author lucas
  */
-public abstract class Genome {
+public class Genome {
     private int genId;
     private ArrayList<NeuronGene> listNeuronGenes;
     private ArrayList<LinkGene> listLinkGenes;
@@ -41,9 +44,92 @@ public abstract class Genome {
         specieId = -1;
     }
     
-    public abstract void Genome(int id, int inputs, int outputs);
-    public abstract void Genome(int id, ArrayList<LinkGene> links, ArrayList<NeuronGene> neurons, int inputs, int outputs);
-    public abstract NeuralNet createNeuralNet(int depth);
+    public Genome(int id, int inputs, int outputs){
+        this();
+        this.genId = id;
+        this.numInputs = inputs;
+        this.numOutputs = outputs;
+        
+        float inputSlice = 1/(float)(inputs+2);
+        for(int i = 0; i < inputs;i++){
+            Vec2 pos = new Vec2(0,(i+2)*inputSlice);
+            listNeuronGenes.add(new NeuronGene(i, NeuronGene.neuron_type.input, false, 1, pos));
+        }
+        
+        Vec2 posBias = new Vec2(0,(inputs+2)*inputSlice);
+        listNeuronGenes.add(new NeuronGene(inputs,NeuronGene.neuron_type.bias,false,1,posBias));
+        
+        float outputSlice = 1/(float)(outputs+2);
+        for(int i = 0; i < outputs;i++){
+            Vec2 pos = new Vec2(1,(outputs+2)*outputSlice);
+            listNeuronGenes.add(new NeuronGene(i,NeuronGene.neuron_type.output,false,1,pos));
+        }
+        
+        Random rand = new Random(System.currentTimeMillis());
+        for(int i = 0; i < inputs;i++){
+            for(int j = 0; j < outputs;j++){
+                
+                //Pode dar erro por causa do j+1-------------------------------------------------
+                listLinkGenes.add(new LinkGene(listNeuronGenes.get(i).getNeuronId(),
+                        listNeuronGenes.get(inputs+j+1).getNeuronId(), inputs+outputs+1+listLinkGenes.size(),
+                        rand.nextDouble(), true, false));
+            }
+        }
+    }
+    
+    public Genome(int id, ArrayList<LinkGene> links, ArrayList<NeuronGene> neurons, int inputs, int outputs){
+        this();
+        this.genId = id;
+        this.listLinkGenes = links;
+        this.listNeuronGenes = neurons;
+        this.numInputs = inputs;
+        this.numOutputs = outputs;
+    }
+    
+    public Genome(Genome gen){
+        this.adjustedSpecieFit = gen.adjustedSpecieFit;
+        this.fitness = gen.fitness;
+        this.genId = gen.genId;
+        this.genNeuralNet = gen.genNeuralNet;
+        this.listLinkGenes = gen.listLinkGenes;
+        this.listNeuronGenes = gen.listNeuronGenes;
+        this.numAmountSpawn = gen.numAmountSpawn;
+        this.numInputs = gen.numInputs;
+        this.numOutputs = gen.numOutputs;
+        this.specieId = gen.specieId;
+    }
+    
+    public NeuralNet createNeuralNet(int layers){
+        if(getGenNeuralNet() != null)
+            setGenNeuralNet(null);
+        
+        ArrayList<Neuron> neuralNeurons = new ArrayList<>();
+        
+        for(int i = 0; i < listNeuronGenes.size();i++){
+            NeuronGene nGene = listNeuronGenes.get(i);
+            Neuron neuron = new Neuron(nGene.getNeuronId(),nGene.getNeuronType(),nGene.getSigmoidResponse(),nGene.getCoordinates());
+            neuralNeurons.add(neuron);
+        }
+        
+        for(int i = 0; i < listLinkGenes.size();i++){
+            LinkGene lGene = listLinkGenes.get(i);
+            if(lGene.isEnabled()){
+                int neuronPos = getNeuronPos(lGene.getFromNeuron());
+                Neuron fromNeuron = neuralNeurons.get(neuronPos);
+                
+                neuronPos = getNeuronPos(lGene.getToNeuron());
+                Neuron toNeuron = neuralNeurons.get(neuronPos);
+                
+                Link link = new Link(fromNeuron,toNeuron,lGene.getWeight(),lGene.isRecurrent());
+                
+                fromNeuron.getListOutLinks().add(link);
+                toNeuron.getListInLinks().add(link);
+            } 
+        }
+        
+        setGenNeuralNet(new NeuralNet(neuralNeurons,layers));
+        return this.genNeuralNet;
+    }
     
     public void addLink(double mutationRate, double probRecurrent, InnovationsDataBase inovationsDB,int numTrysLoop, int numTrysAddLink){
         Random rand = new Random(System.currentTimeMillis());
@@ -55,7 +141,8 @@ public abstract class Genome {
         boolean recLinkSelected = false;
         
         if(rand.nextDouble() < probRecurrent){
-            while(numTrysLoop-- != 0){
+            while(numTrysLoop != 0){
+                numTrysLoop--;
                 int neuronPos = rand.nextInt(getListNeuronGenes().size() - (getNumInputs()+1)) + getNumInputs()+1;
                 NeuronGene.neuron_type neuronType = getListNeuronGenes().get(neuronPos).getNeuronType();
                 if(!listNeuronGenes.get(neuronPos).isIsRecurent() && neuronType != NeuronGene.neuron_type.bias && neuronType != NeuronGene.neuron_type.input){
@@ -69,7 +156,8 @@ public abstract class Genome {
                 }
             }
         }else{
-            while(numTrysAddLink-- != 0){
+            while(numTrysAddLink != 0){
+                numTrysAddLink--;
                 int randNeuronPos = rand.nextInt(getListNeuronGenes().size()-1);
                 randNeuronId1 = getListNeuronGenes().get(randNeuronPos).getNeuronId();
                 
@@ -121,7 +209,8 @@ public abstract class Genome {
         final int totlHidNeuronsThresrold = getNumInputs() + 5;
         
         if(getListLinkGenes().size() < totlHidNeuronsThresrold){
-            while(numTrysOldLink-- == 0){
+            while(numTrysOldLink == 0){
+                numTrysOldLink--;
                 choosenLinkId = rand.nextInt(getListLinkGenes().size()-1-(int)Math.sqrt(getListLinkGenes().size()));
                 
                 int fromNeuron = getListLinkGenes().get(choosenLinkId).getFromNeuron();
@@ -153,7 +242,7 @@ public abstract class Genome {
         
         getListLinkGenes().get(choosenLinkId).setEnabled(false);
         
-        //MODIFICAR ESTA LINHA, SUBSTITUIR POR SOMATÓRIOS PARA VER A EFICÁCIA ----------------------------
+        //MODIFICAR ESTA LINHA, SUBSTITUIR PELA FUNÇÃO CALCULADA LN(X/1-X)/X PARA VER A EFICÁCIA ----------------------------
         double origWeight = getListLinkGenes().get(choosenLinkId).getWeight();
         
         int fromId = getListLinkGenes().get(choosenLinkId).getFromNeuron();
@@ -200,12 +289,96 @@ public abstract class Genome {
         }
     }
     
-    public abstract void mutateWeights(double mutationRate,int propNewMut,double maxPerturbation);
-    public abstract void mutateActvationResponse(double mutationRate, double maxPerturbation);
-    public abstract double getCompabilityScore(Genome gen);
-    public abstract void sortGenes();
+    public void mutateWeights(double mutationRate,double probNewMut,double maxPerturbation){
+        Random rand = new Random(System.currentTimeMillis());
+        for(int i = 0;i<listLinkGenes.size();i++){
+            if(rand.nextDouble() < mutationRate){
+                if(rand.nextDouble() < probNewMut){
+                    listLinkGenes.get(i).setWeight(rand.nextDouble());
+                }else{
+                    double actWeight = listLinkGenes.get(i).getWeight();
+                    listLinkGenes.get(i).setWeight(actWeight + rand.nextDouble()*maxPerturbation);
+                }
+            }
+        }
+    }
     
-    public boolean duplicatedLink(int fromNeuron, int toNeuron){
+    public void mutateActvationResponse(double mutationRate, double maxPerturbation){
+        Random rand = new Random(System.currentTimeMillis());
+        for(int i = 0; i < listNeuronGenes.size(); i++){
+           if(rand.nextDouble() < mutationRate){
+               double actResp = listNeuronGenes.get(i).getSigmoidResponse();
+               listNeuronGenes.get(i).setSigmoidResponse(actResp + rand.nextDouble()*maxPerturbation);
+           } 
+        }
+    }
+    
+    public double getCompatibilityScore(Genome gen){
+        double numDisjoint = 0;
+        double numExcess = 0;
+        double numMatched = 0;
+        
+        double diffMatchedWeights = 0;
+        
+        int g1 = 0;
+        int g2 = 0;
+        
+        while(g1 < listLinkGenes.size()-1 || g2 < gen.listLinkGenes.size()-1){
+            if(g1 == listLinkGenes.size()-1){
+                g2++;
+                numExcess++;
+                
+                continue;
+            }
+            
+            if(g2 == gen.listLinkGenes.size()-1){
+                g1++;
+                numExcess++;
+                
+                continue;
+            }
+            
+            int idInnov1 = listLinkGenes.get(g1).getInovationID();
+            int idInnov2 = listLinkGenes.get(g2).getInovationID();
+            
+            if(idInnov1 == idInnov2){
+                numMatched++;
+                g1++;
+                g2++;
+                
+                diffMatchedWeights += Math.abs(listLinkGenes.get(g1).getWeight() - gen.listLinkGenes.get(g2).getWeight());
+            }
+            
+            if(idInnov1 < idInnov2){
+                numDisjoint++;
+                g1++;
+            }
+            
+            if(idInnov1 > idInnov2){
+                numDisjoint++;
+                g2++;
+            }
+        }
+        
+        int largest = gen.listLinkGenes.size();
+        if(largest < listLinkGenes.size()){
+            largest = listLinkGenes.size();
+        }
+        
+        double wDisjoint = 1;
+        double wExcess = 1;
+        double wMatched = 0.4;
+        
+        double score = (wExcess*numExcess/(double)largest) + wDisjoint*numDisjoint/(double)largest + diffMatchedWeights*wMatched/numMatched;
+        
+        return score;
+    }
+    
+    public void sortGenes(){
+        Collections.sort(listLinkGenes,(a, b) -> a.getInovationID() < b.getInovationID() ? -1 : a.getInovationID() == b.getInovationID() ? 0 : 1);
+    }
+    
+    private boolean duplicatedLink(int fromNeuron, int toNeuron){
         boolean duplicated = false;
         for(LinkGene link : getListLinkGenes()){
             if(link.getFromNeuron() == fromNeuron && link.getToNeuron() == toNeuron){
@@ -233,6 +406,10 @@ public abstract class Genome {
             return false;
         else
             return true;
+    }
+    
+    public double splitNNGraphY(int val){
+        return listNeuronGenes.get(val).getCoordinates().y;
     }
 
     /**
@@ -361,4 +538,17 @@ public abstract class Genome {
         this.listLinkGenes = listLinkGenes;
     }
 
+    /**
+     * @return the genNeuralNet
+     */
+    public NeuralNet getGenNeuralNet() {
+        return genNeuralNet;
+    }
+
+    /**
+     * @param genNeuralNet the genNeuralNet to set
+     */
+    public void setGenNeuralNet(NeuralNet genNeuralNet) {
+        this.genNeuralNet = genNeuralNet;
+    }
 }

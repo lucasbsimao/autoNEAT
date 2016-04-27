@@ -5,6 +5,7 @@
  */
 package mlalgorithm;
 
+import utils.Vec2;
 import carlearndriveenn.*;
 
 /**
@@ -38,6 +39,10 @@ public class NeuronGene {
         this.isRecurent = isRec;
         this.sigmoidResponse = sigResp;
         this.coordinates = coord;
+    }
+    
+    public NeuronGene(NeuronGene toCopy){
+        this(toCopy.neuronId,toCopy.neuronType,toCopy.isRecurent,toCopy.sigmoidResponse,toCopy.coordinates);
     }
     
      /**

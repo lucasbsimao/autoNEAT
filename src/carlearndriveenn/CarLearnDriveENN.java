@@ -6,6 +6,9 @@
 package carlearndriveenn;
 
 import java.awt.EventQueue;
+import java.util.ArrayList;
+import java.util.Collections;
+import mlalgorithm.Genome;
 
 public class CarLearnDriveENN {
 

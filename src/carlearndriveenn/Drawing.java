@@ -5,6 +5,7 @@
  */
 package carlearndriveenn;
 
+import utils.Vec2;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

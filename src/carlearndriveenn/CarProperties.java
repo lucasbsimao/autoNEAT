@@ -5,6 +5,7 @@
  */
 package carlearndriveenn;
 
+import utils.Vec2;
 import java.util.ArrayList;
 
 /**
@@ -28,7 +29,7 @@ public class CarProperties {
         sensorsVec = new ArrayList();
         position = initPos;
         this.setAngle(initAng);
-        linVelocity = new Vec2(10,-2);
+        linVelocity = new Vec2(30,0);
         angVelocity = 0.0F;
         travelledDist = 0.0F;
         

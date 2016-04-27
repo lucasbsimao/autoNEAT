@@ -5,6 +5,8 @@
  */
 package carlearndriveenn;
 
+import utils.Vec2;
+
 /**
  *
  * @author lucas

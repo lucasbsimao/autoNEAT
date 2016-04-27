@@ -5,6 +5,7 @@
  */
 package carlearndriveenn;
 
+import utils.Vec2;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;

@@ -5,7 +5,7 @@
  */
 package mlalgorithm;
 
-import carlearndriveenn.Vec2;
+import utils.Vec2;
 
 /**
  *
