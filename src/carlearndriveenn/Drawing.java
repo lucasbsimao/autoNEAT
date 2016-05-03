@@ -58,13 +58,13 @@ class Drawing extends JPanel implements Runnable{
         
         midPoints.add(new Vec2(140,60));
         try{
-            addRoadSegment(50, 70, 45);
-            addRoadSegment(50, 25, -45);
-            addRoadSegment(100, 80, 45);
-            addRoadSegment(50, 70, 45);
-            addRoadSegment(50, 25, -45);
-            addRoadSegment(100, 80, 45);
-            addRoadSegment(50, 70, 45);
+            addRoadSegment(300, 70, 90);
+            addRoadSegment(300, 25, 90);
+            addRoadSegment(200, 80, 180);
+            addRoadSegment(30, 50,-180);
+//            addRoadSegment(50, 25, -45);
+//            addRoadSegment(100, 80, 45);
+//            addRoadSegment(50, 70, 45);
 //            addRoadSegment(200, 100, -90);
 //            addRoadSegment(300, 70, -30);
 //            addRoadSegment(200, 25, -90);

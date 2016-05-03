@@ -45,7 +45,7 @@ public class Controller implements Runnable{
     public Controller(CarProperties carProp,ArrayList<Vec2> inEdge,ArrayList<Vec2> outEdge,ArrayList<Vec2> midPoints, float roadSize){
         this.physics = new Physics(carProp,inEdge,outEdge,midPoints,roadSize);
         //Sensors + lin velocity + ang velocity
-        this.learnDrive = new LearnDriveENN(150, carProp.getSensorsVec().size()+1, 2);
+        this.learnDrive = new LearnDriveENN(150, carProp.getSensorsVec().size(), 2);
         this.carProp = carProp;
         
         listNets = learnDrive.createNeuralNets();
@@ -84,12 +84,13 @@ public class Controller implements Runnable{
             Physics physicsTest = new Physics(carTest, physics.getInEdge(), physics.getOutEdge(), physics.getMidPoints(), physics.getRoadSize());
             
             double sum = 0;
+            int cont = 0;
             while(!carTest.isCrashed()){
                 Vec2 prevPos = new Vec2(carTest.getPosition());
                 
-                ArrayList<Double> inputs = new ArrayList<>(carTest.getTaxSensorStages());
+                ArrayList<Double> inputs = new ArrayList<>(carTest.getSensorStages());
                 //inputs.add((double)carTest.getLinVelocity().length());
-                inputs.add((double)carTest.getAngVelocity());
+                //inputs.add((double)carTest.getAngVelocity());
                 ArrayList<Double> outputs = listNets.get(i).feed(inputs, NeuralNet.run_type.active);
                 
                 carTest.setWheelVelocities(outputs.get(0).floatValue(), outputs.get(1).floatValue());
@@ -109,8 +110,15 @@ public class Controller implements Runnable{
                     sum += dDistTraveled*Math.cos(angle);
                 }
                 
+//                if(testTimeLeft < cont && sum < 10){
+//                    sum -= 200;
+//                    break;
+//                }
+                   
+                
+                cont++;
+                
             }
-            //System.out.println("-------------------------------\n\n");
             
             listFitness.add(sum+carTest.getFitness());
             double totalScore = sum+carTest.getFitness();
@@ -155,9 +163,9 @@ public class Controller implements Runnable{
                         carProp.setCrashed(false);
                     actGeneration++;
                 }else{
-                    ArrayList<Double> inputs = new ArrayList<>(carProp.getTaxSensorStages());
+                    ArrayList<Double> inputs = new ArrayList<>(carProp.getSensorStages());
                     //inputs.add((double)carProp.getLinVelocity().length());
-                    inputs.add((double)carProp.getAngVelocity()/CarProperties.maxAngVelocity);
+                    //inputs.add((double)carProp.getAngVelocity()/CarProperties.maxAngVelocity);
                     ArrayList<Double> outputs = neuralNet.feed(inputs, NeuralNet.run_type.active);
                     
                     carProp.setWheelVelocities(outputs.get(0).floatValue(), outputs.get(1).floatValue());

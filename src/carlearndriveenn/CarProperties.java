@@ -105,9 +105,9 @@ public class CarProperties {
         
         if(right < left) centVelocity *= -1;
         
-        this.angVelocity += centVelocity/(height/2);
-        if(this.angVelocity > maxVelocity/(height/2)) this.angVelocity = (float)maxVelocity/(height/2);
-        if(this.angVelocity < maxVelocity/(height/2)) this.angVelocity = (float)-maxVelocity/(height/2);
+        this.angVelocity = centVelocity/(height/2);
+        //if(this.angVelocity > maxVelocity/(height/2)) this.angVelocity = (float)maxVelocity/(height/2);
+        //if(this.angVelocity < maxVelocity/(height/2)) this.angVelocity = (float)-maxVelocity/(height/2);
     }
 
     /**
