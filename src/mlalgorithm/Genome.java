@@ -11,6 +11,7 @@ import carlearndriveenn.*;
 import java.util.Collections;
 import java.util.Random;
 import mlalgorithm.NeuralNetwork.*;
+import utils.CreateRandomNumber;
 
 /**
  *
@@ -50,29 +51,31 @@ public class Genome {
         this.numInputs = inputs;
         this.numOutputs = outputs;
         
+        int neuronId = 0;
         float inputSlice = 1/(float)(inputs+2);
         for(int i = 0; i < inputs;i++){
             Vec2 pos = new Vec2(0,(i+2)*inputSlice);
-            listNeuronGenes.add(new NeuronGene(i, NeuronGene.neuron_type.input, false, 1, pos));
+            listNeuronGenes.add(new NeuronGene(neuronId, NeuronGene.neuron_type.input, false, 1, pos));
+            neuronId++;
         }
         
         Vec2 posBias = new Vec2(0,(inputs+2)*inputSlice);
-        listNeuronGenes.add(new NeuronGene(inputs,NeuronGene.neuron_type.bias,false,1,posBias));
+        listNeuronGenes.add(new NeuronGene(neuronId,NeuronGene.neuron_type.bias,false,1,posBias));
+        neuronId++;
         
         float outputSlice = 1/(float)(outputs+2);
         for(int i = 0; i < outputs;i++){
             Vec2 pos = new Vec2(1,(outputs+2)*outputSlice);
-            listNeuronGenes.add(new NeuronGene(i,NeuronGene.neuron_type.output,false,1,pos));
+            listNeuronGenes.add(new NeuronGene(neuronId,NeuronGene.neuron_type.output,false,1,pos));
+            neuronId++;
         }
-        
-        Random rand = new Random(System.currentTimeMillis());
-        for(int i = 0; i < inputs;i++){
+
+        for(int i = 0; i < inputs+1;i++){
             for(int j = 0; j < outputs;j++){
-                
-                //Pode dar erro por causa do j+1-------------------------------------------------
+                double randon = CreateRandomNumber.getRandom().nextDouble();
                 listLinkGenes.add(new LinkGene(listNeuronGenes.get(i).getNeuronId(),
                         listNeuronGenes.get(inputs+j+1).getNeuronId(), inputs+outputs+1+listLinkGenes.size(),
-                        rand.nextDouble(), true, false));
+                        randon, true, false));
             }
         }
     }
@@ -111,6 +114,10 @@ public class Genome {
             neuralNeurons.add(neuron);
         }
         
+        if(listNeuronGenes.size()< 9){
+            
+        }
+        
         for(int i = 0; i < listLinkGenes.size();i++){
             LinkGene lGene = listLinkGenes.get(i);
             if(lGene.isEnabled()){
@@ -132,18 +139,18 @@ public class Genome {
     }
     
     public void addLink(double mutationRate, double probRecurrent, InnovationsDataBase inovationsDB,int numTrysLoop, int numTrysAddLink){
-        Random rand = new Random(System.currentTimeMillis());
-        if(rand.nextDouble() > mutationRate) return;
-        
+        if(CreateRandomNumber.getRandom().nextDouble() > mutationRate) return;
         int randNeuronId1 = -1;
         int randNeuronId2 = -1;
         
+        //System.out.println("new Link");
+        
         boolean recLinkSelected = false;
         
-        if(rand.nextDouble() < probRecurrent){
+        if(CreateRandomNumber.getRandom().nextDouble() < probRecurrent){
             while(numTrysLoop != 0){
                 numTrysLoop--;
-                int neuronPos = rand.nextInt(getListNeuronGenes().size() - (getNumInputs()+1)) + getNumInputs()+1;
+                int neuronPos = CreateRandomNumber.getRandom().nextInt(getListNeuronGenes().size() - getNumInputs()) + getNumInputs();
                 NeuronGene.neuron_type neuronType = getListNeuronGenes().get(neuronPos).getNeuronType();
                 if(!listNeuronGenes.get(neuronPos).isIsRecurent() && neuronType != NeuronGene.neuron_type.bias && neuronType != NeuronGene.neuron_type.input){
                     randNeuronId1 = getListNeuronGenes().get(neuronPos).getNeuronId();
@@ -158,10 +165,10 @@ public class Genome {
         }else{
             while(numTrysAddLink != 0){
                 numTrysAddLink--;
-                int randNeuronPos = rand.nextInt(getListNeuronGenes().size()-1);
+                int randNeuronPos = CreateRandomNumber.getRandom().nextInt(getListNeuronGenes().size()-1);
                 randNeuronId1 = getListNeuronGenes().get(randNeuronPos).getNeuronId();
                 
-                randNeuronPos = rand.nextInt(getListNeuronGenes().size() - (getNumInputs()+1)) + getNumInputs()+1;
+                randNeuronPos = CreateRandomNumber.getRandom().nextInt(getListNeuronGenes().size() - getNumInputs()) + getNumInputs();
                 randNeuronId2 = getListNeuronGenes().get(randNeuronPos).getNeuronId();
                 
                 if(randNeuronId2 == 2){
@@ -169,49 +176,48 @@ public class Genome {
                 }
                 
                 if(!(duplicatedLink(randNeuronId1, randNeuronId2) || randNeuronId1 == randNeuronId2)){
-                    break;
+                    numTrysAddLink = 0;
                 }else{
                     randNeuronId1 = -1;
                     randNeuronId2 = -1;
                 }
             }
+        }
             
-            if(randNeuronId1 == -1 || randNeuronId2 == -1){
-                return;
-            }
-            
-            int id = inovationsDB.checkInnovation(randNeuronId1, randNeuronId2, Innovation.innovation_type.link);
-            
-            if(getListNeuronGenes().get(getNeuronPos(randNeuronId1)).getCoordinates().y > getListNeuronGenes().get(getNeuronPos(randNeuronId2)).getCoordinates().y)
-                recLinkSelected = true;
-            
-            if(id < 0){
-                inovationsDB.createInnovation(randNeuronId1,randNeuronId2,Innovation.innovation_type.link);
-                
-                //MODIFICADO AQUI------------------------------------------
-                id = inovationsDB.nextNumber();
-            }
-            
-            LinkGene link = new LinkGene(randNeuronId1,randNeuronId2,id,rand.nextDouble(),true,recLinkSelected);
+        if(randNeuronId1 == -1 || randNeuronId2 == -1){
+            return;
+        }
+
+        int id = inovationsDB.checkInnovation(randNeuronId1, randNeuronId2, Innovation.innovation_type.link);
+
+        if(getListNeuronGenes().get(getNeuronPos(randNeuronId1)).getCoordinates().y > getListNeuronGenes().get(getNeuronPos(randNeuronId2)).getCoordinates().y)
+            recLinkSelected = true;
+
+        if(id < 0){
+            id = inovationsDB.nextNumber();
+            inovationsDB.createInnovation(randNeuronId1,randNeuronId2,Innovation.innovation_type.link);
+        }else{
+
+            LinkGene link = new LinkGene(randNeuronId1,randNeuronId2,id,CreateRandomNumber.getRandom().nextDouble(),true,recLinkSelected);
             getListLinkGenes().add(link);
         }
     }
     
+    
     public void addNeuron(double mutationRate,InnovationsDataBase innovationsDB, int numTrysOldLink){
-        Random rand = new Random(System.currentTimeMillis());
-        
-        if(rand.nextDouble() > mutationRate)
+        if(CreateRandomNumber.getRandom().nextDouble() > mutationRate)
             return;
         
+        //System.out.println("new Neuron");
         boolean validLink = false;
-        int choosenLinkId = -1;
+        int choosenLinkId = 0;
         
-        final int totlHidNeuronsThresrold = getNumInputs() + 5;
+        final int totlHidNeuronsThresrold = numInputs + numOutputs + 5;
         
         if(getListLinkGenes().size() < totlHidNeuronsThresrold){
-            while(numTrysOldLink == 0){
+            while(numTrysOldLink != 0){
                 numTrysOldLink--;
-                choosenLinkId = rand.nextInt(getListLinkGenes().size()-1-(int)Math.sqrt(getListLinkGenes().size()));
+                choosenLinkId = CreateRandomNumber.getRandom().nextInt(getListLinkGenes().size()-1-(int)Math.sqrt(getListLinkGenes().size()));
                 
                 int fromNeuron = getListLinkGenes().get(choosenLinkId).getFromNeuron();
                 
@@ -227,43 +233,46 @@ public class Genome {
             if(!validLink) return; 
         }else{
             while(!validLink){
-                choosenLinkId = rand.nextInt(getListLinkGenes().size());
+                choosenLinkId = CreateRandomNumber.getRandom().nextInt(listLinkGenes.size()-1);
                 
                 int fromNeuron = getListLinkGenes().get(choosenLinkId).getFromNeuron();
                 
                 if(getListLinkGenes().get(choosenLinkId).isEnabled() &&
                         !listLinkGenes.get(choosenLinkId).isRecurrent() &&
-                        getListNeuronGenes().get(getNeuronPos(fromNeuron)).getNeuronType() != NeuronGene.neuron_type.bias){
+                        listNeuronGenes.get(getNeuronPos(fromNeuron)).getNeuronType() != NeuronGene.neuron_type.bias){
                     
                     validLink = true;
                 }
             }
         }
         
-        getListLinkGenes().get(choosenLinkId).setEnabled(false);
+        listLinkGenes.get(choosenLinkId).setEnabled(false);
         
         //MODIFICAR ESTA LINHA, SUBSTITUIR PELA FUNÇÃO CALCULADA LN(X/1-X)/X PARA VER A EFICÁCIA ----------------------------
-        double origWeight = getListLinkGenes().get(choosenLinkId).getWeight();
+        double origWeight = listLinkGenes.get(choosenLinkId).getWeight();
         
-        int fromId = getListLinkGenes().get(choosenLinkId).getFromNeuron();
-        int toId = getListLinkGenes().get(choosenLinkId).getToNeuron();
+        int fromId = listLinkGenes.get(choosenLinkId).getFromNeuron();
+        int toId = listLinkGenes.get(choosenLinkId).getToNeuron();
         
-        Vec2 newCoord = getListNeuronGenes().get(fromId).getCoordinates().add(getListNeuronGenes().get(toId).getCoordinates());
+        Vec2 newCoord = listNeuronGenes.get(getNeuronPos(fromId)).getCoordinates().add(getListNeuronGenes().get(getNeuronPos(toId)).getCoordinates());
         newCoord.divLocal(2);
-        
         int id = innovationsDB.checkInnovation(fromId, toId, Innovation.innovation_type.neuron);
+ 
         
-        int neuronId = innovationsDB.getNeuronIdByInnovId(id);
+        if(id >= 0){
+            int neuronId = innovationsDB.getNeuronIdByInnovId(id);
 
-        if(neuronAlreadyExists(neuronId)) id = -1;
+            if(neuronAlreadyExists(neuronId)) id = -1;
+        }
         
         if(id < 0){
-            neuronId = innovationsDB.createInnovation(fromId, toId, Innovation.innovation_type.neuron, NeuronGene.neuron_type.hidden, newCoord);
-            getListNeuronGenes().add(new NeuronGene(neuronId,NeuronGene.neuron_type.hidden,false,0,newCoord));
+            int neuronId = innovationsDB.createInnovation(fromId, toId, Innovation.innovation_type.neuron, NeuronGene.neuron_type.hidden, newCoord);
+            getListNeuronGenes().add(new NeuronGene(neuronId,NeuronGene.neuron_type.hidden,false,1,newCoord));
             
             int idLink1 = innovationsDB.nextNumber();
             innovationsDB.createInnovation(fromId, neuronId, Innovation.innovation_type.link);
             
+            //double newW = Math.log(listNeuronGenes.get(fromId).get);
             LinkGene link1 = new LinkGene(fromId,neuronId,idLink1,1.0,true,false);
             
             int idLink2 = innovationsDB.nextNumber();
@@ -274,10 +283,15 @@ public class Genome {
             getListLinkGenes().add(link1);
             getListLinkGenes().add(link2);
         }else{
-            neuronId = innovationsDB.getNeuronIdByInnovId(id);
+            int neuronId = innovationsDB.getNeuronIdByInnovId(id);
             
             int idLink1 = innovationsDB.checkInnovation(fromId, neuronId, Innovation.innovation_type.link);
             int idLink2 = innovationsDB.checkInnovation(neuronId, toId, Innovation.innovation_type.link);
+            
+            if(idLink1 < 0 || idLink2 < 0){
+                System.out.println("Problem in add Neuron");
+                //System.exit(0);
+            }
             
             LinkGene link1 = new LinkGene(fromId,neuronId,idLink1,1.0,true,false);
             LinkGene link2 = new LinkGene(neuronId,toId,idLink2,origWeight,true,false);
@@ -285,7 +299,7 @@ public class Genome {
             getListLinkGenes().add(link1);
             getListLinkGenes().add(link2);
             
-            getListNeuronGenes().add(new NeuronGene(neuronId,NeuronGene.neuron_type.hidden,false,0,newCoord));
+            getListNeuronGenes().add(new NeuronGene(neuronId,NeuronGene.neuron_type.hidden,false,1,newCoord));
         }
     }
     
@@ -304,11 +318,10 @@ public class Genome {
     }
     
     public void mutateActvationResponse(double mutationRate, double maxPerturbation){
-        Random rand = new Random(System.currentTimeMillis());
         for(int i = 0; i < listNeuronGenes.size(); i++){
-           if(rand.nextDouble() < mutationRate){
+           if(CreateRandomNumber.getRandom().nextDouble() < mutationRate){
                double actResp = listNeuronGenes.get(i).getSigmoidResponse();
-               listNeuronGenes.get(i).setSigmoidResponse(actResp + rand.nextDouble()*maxPerturbation);
+               listNeuronGenes.get(i).setSigmoidResponse(actResp + CreateRandomNumber.getRandom().nextDouble()*maxPerturbation);
            } 
         }
     }
@@ -323,11 +336,10 @@ public class Genome {
         int g1 = 0;
         int g2 = 0;
         
-        while(g1 < listLinkGenes.size()-1 || g2 < gen.listLinkGenes.size()-1){
+        while(g1 < listLinkGenes.size() -1 || g2 < gen.listLinkGenes.size()-1){
             if(g1 == listLinkGenes.size()-1){
                 g2++;
                 numExcess++;
-                
                 continue;
             }
             
@@ -550,5 +562,19 @@ public class Genome {
      */
     public void setGenNeuralNet(NeuralNet genNeuralNet) {
         this.genNeuralNet = genNeuralNet;
+    }
+    
+    public void printNeurons(){
+        for(int i = 0; i < listNeuronGenes.size();i++){
+            System.out.println(listNeuronGenes.get(i).getNeuronId() + " - " + listNeuronGenes.get(i).getNeuronType());
+        }
+    }
+    
+    public void printLinks(){
+        for(int i = 0; i < listLinkGenes.size();i++){
+            System.out.println(listLinkGenes.get(i).getInovationID() + " - "
+                    + listLinkGenes.get(i).getFromNeuron() + "("+ listNeuronGenes.get(getNeuronPos(listLinkGenes.get(i).getFromNeuron())).getNeuronType() + ") : "
+                    + listLinkGenes.get(i).getToNeuron()+"("+ listNeuronGenes.get(getNeuronPos(listLinkGenes.get(i).getToNeuron())).getNeuronType() + ")");
+        }
     }
 }

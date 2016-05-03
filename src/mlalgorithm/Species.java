@@ -7,6 +7,7 @@ package mlalgorithm;
 
 import java.util.ArrayList;
 import java.util.Random;
+import utils.CreateRandomNumber;
 
 /**
  *
@@ -61,7 +62,7 @@ public class Species {
         
         int youngBonusAgeThreshhold = 10;
         double youngFitnessBonus = 1.3;
-        int oldAgeThreshold = 50;
+        int oldAgeThreshold = 15;
         double oldFitnessPenalty = 0.7;
         
         for(int i = 0; i < getGenMembers().size();i++){
@@ -87,14 +88,12 @@ public class Species {
         
         if(genMembers.size() == 1){
             offspring = genMembers.get(0);
-        }else{
-            Random rand = new Random(System.currentTimeMillis());
-            
+        }else{  
             Double max = (chanceSurvive*genMembers.size())+1;
             int maxSurviveId = max.intValue();
-            int id = rand.nextInt(maxSurviveId);
+            int id = CreateRandomNumber.getRandom().nextInt(maxSurviveId);
             
-            offspring = genMembers.get(id);
+            offspring = new Genome(genMembers.get(id));
             
         }
         

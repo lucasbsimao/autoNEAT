@@ -7,16 +7,12 @@ package carlearndriveenn;
 
 import utils.Vec2;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
  * @author lucas
  */
-public class Physics implements Runnable{
+public class Physics{
     private CarProperties carProp;
     private ArrayList<Vec2> inEdge;
     private ArrayList<Vec2> outEdge;
@@ -38,20 +34,30 @@ public class Physics implements Runnable{
     }
     
     public void stepSimulation(float timeStep){
-        calculateCarPosition(timeStep);
-        calculateCarSensorStage();
-        detectCollision();
+            calculateCarPosition(timeStep);
+        if(!carReachFinish()){
+            calculateCarSensorStage();
+            detectCollision();
+        }
+    }
+    
+    private boolean carReachFinish(){
+        Vec2 vecDistFinish = midPoints.get(midPoints.size()-1).sub(carProp.getPosition());
+        if(vecDistFinish.length() < carProp.getHeight()){
+            carProp.setChampion(true);
+            carProp.setCrashed(true);
+            return true;
+        }
+        return false;
     }
     
     private void calculateCarPosition(float timeStep){
         Vec2 deltaPosition = carProp.getLinVelocity().mul(timeStep);
-        
-        carProp.setTravelledDist(carProp.getTravelledDist()+deltaPosition.length());
-        
         carProp.setPosition(carProp.getPosition().add(deltaPosition));
         
         float deltaAngle = carProp.getAngVelocity()*timeStep;
-        carProp.setAngle(carProp.getAngle()+deltaAngle);
+        //System.out.println("Physics:\t" + carProp.getAngle() + "\t" + deltaAngle);
+        carProp.setAngle(carProp.getAngle()+(float)Math.toDegrees(deltaAngle));
     }
     
     public void detectCollision(){
@@ -65,15 +71,17 @@ public class Physics implements Runnable{
             if(nearestPt != null)nearRoadEdgePts.add(nearestPt);
             
             int id = -1;
-            if(inEdge.contains(nearestPt)) id = inEdge.indexOf(nearestPt);
-            else id = outEdge.indexOf(nearestPt);
-            nearRoadMidPts.add(midPoints.get(id));
+            if(getInEdge().contains(nearestPt)) id = getInEdge().indexOf(nearestPt);
+            else id = getOutEdge().indexOf(nearestPt);
+            nearRoadMidPts.add(getMidPoints().get(id));
         }
 
         for(int i = 0; i < carEdgePts.size();i++){
             if(tangentCollision(nearRoadMidPts.get(i),nearRoadEdgePts.get(i),carEdgePts.get(i))){
-                carProp.setPosition(new Vec2(160,60));
                 carProp.setCrashed(true);
+                
+                carProp.setPosition(new Vec2(160,60));
+                carProp.reset();
                 break;
             }
         }
@@ -97,8 +105,8 @@ public class Physics implements Runnable{
         float areaParam = carProp.getWidth() < carProp.getHeight() ? carProp.getHeight() : carProp.getWidth();
         ArrayList<Integer> carArea = new ArrayList<>();
         boolean achievePt = false;
-        for(int i = 0; i < midPoints.size(); i++){
-            Vec2 midPt = midPoints.get(i);
+        for(int i = 0; i < getMidPoints().size(); i++){
+            Vec2 midPt = getMidPoints().get(i);
             Vec2 distPointCar = carProp.getPosition().sub(midPt);
             if(distPointCar.length() < areaParam){
                 carArea.add(i);
@@ -136,15 +144,18 @@ public class Physics implements Runnable{
     }
     
     private void calculateCarSensorStage() {
-        ArrayList<Sensor> carSensors = carProp.getSensorsVec();
+        ArrayList<Sensor> carSensors = new ArrayList<>(carProp.getSensorsVec());
+        double dSensReach = 0;
         for(int i = 0; i < carSensors.size();i++){
             Sensor sens = carSensors.get(i);
-            Vec2 sensorFinPt = sens.getSensorStartPosition().add(sens.getSensorUnitVec().mul(sens.getSensorLength()));
+            dSensReach = sens.getSensorStage();
+            Vec2 sensUnit = sens.getSensorUnitVec().mul((float)sens.getSensorLength());
+            Vec2 sensorFinPt = sens.getSensorStartPosition().add(sensUnit);
             Vec2 nearestPt = searchNearPointRoadEdge(sensorFinPt);
             
             Vec2 axisXUVec = defineSensorRelativeCoordinate(sens,nearestPt);
             Vec2 axisYUVec = null;
-            if(outEdge.contains(nearestPt)) 
+            if(getOutEdge().contains(nearestPt)) 
                 axisYUVec = new Vec2(axisXUVec.rotated(-Vec2.PI/2));
             else
                 axisYUVec = new Vec2(axisXUVec.rotated(Vec2.PI/2));
@@ -155,54 +166,81 @@ public class Physics implements Runnable{
             if(axisYUVec.angle(relPosSensFinEdge) > Vec2.PI/2){
                 sens.setSensorStage(0);
             }else{
-                float radsSensUVecToXUVec = axisXUVec.angle(sens.getSensorUnitVec());
-                float radsSensIniToXUVec = axisXUVec.angle(relPosSensIniEdge);
+                double radsSensUVecToXUVec = axisXUVec.angle(sens.getSensorUnitVec());
+                double radsSensIniToXUVec = axisXUVec.angle(relPosSensIniEdge);
                 
-                float localYCompLen = (float)Math.abs(sens.getSensorLength()*Math.sin(radsSensUVecToXUVec));
-                float localYCompRemainLen = (float)Math.abs(relPosSensIniEdge.length()*Math.sin(radsSensIniToXUVec));
+                double localYCompLen = Math.abs(sens.getSensorLength()*Math.sin(radsSensUVecToXUVec));
+                double localYCompRemainLen = Math.abs(relPosSensIniEdge.length()*Math.sin(radsSensIniToXUVec));
                 
-                float remainLenght = (float)Math.abs(localYCompLen - localYCompRemainLen);
-                float percRemainLen = remainLenght/localYCompLen;
-                
-                sens.setSensorStage(percRemainLen);
+                double remainLenght = Math.abs(localYCompLen - localYCompRemainLen);
+                double percRemainLen = remainLenght/localYCompLen;
+                dSensReach -= percRemainLen;
+                sens.setSensorStage((float)percRemainLen);
+                sens.setTaxSensorStage((float)dSensReach);
+                carProp.setFitness(carProp.getFitness()+dSensReach*CarProperties.constPunishSensor);
             }
         }
     }
 
     private Vec2 searchNearPointRoadEdge(Vec2 refPt){
-            float nearestDist = 9999;
-            Vec2 nearestPt = null;
-            int id = 0;
-            for(int j = 0; j < inEdge.size();j++){
-                Vec2 vecDist = refPt.sub(inEdge.get(j));
-                if(vecDist.length() < nearestDist){
-                    nearestDist = vecDist.length();
-                    nearestPt = new Vec2(inEdge.get(j));
-                }
+        float nearestDist = 9999;
+        Vec2 nearestPt = null;
+        for(int j = 0; j < getInEdge().size();j++){
+            Vec2 vecDist = refPt.sub(getInEdge().get(j));
+            if(vecDist.length() < nearestDist){
+                nearestDist = vecDist.length();
+                nearestPt = new Vec2(getInEdge().get(j));
             }
-            
-            for(int j = 0; j < outEdge.size();j++){
-                Vec2 vecDist = refPt.sub(outEdge.get(j));
-                if(vecDist.length() < nearestDist){
-                    nearestDist = vecDist.length();
-                    nearestPt = new Vec2(outEdge.get(j));
-                }
+        }
+
+        for(int j = 0; j < getOutEdge().size();j++){
+            Vec2 vecDist = refPt.sub(getOutEdge().get(j));
+            if(vecDist.length() < nearestDist){
+                nearestDist = vecDist.length();
+                nearestPt = new Vec2(getOutEdge().get(j));
             }
+        }
         
         return nearestPt;
     }
     
-    public Vec2 defineSensorRelativeCoordinate(Sensor sens, Vec2 edgeNearPt){
-        Vec2 sensorFinPt = sens.getSensorStartPosition().add(sens.getSensorUnitVec().mul(sens.getSensorLength()));
+    public Vec2 calculateRoadDirection(Vec2 refPt){
+        float nearestDist = 9999;
+        Vec2 nearestPt = null;
+        int id = 0;
+        for(int j = 0; j < midPoints.size();j++){
+            Vec2 vecDist = refPt.sub(midPoints.get(j));
+            if(vecDist.length() < nearestDist){
+                nearestDist = vecDist.length();
+                nearestPt = new Vec2(midPoints.get(j));
+                id = j;
+            }
+        }
+        
+        Vec2 direction = null;
+        if(id+1 != midPoints.size()){
+            direction = midPoints.get(id+1).sub(nearestPt);
+        }else{
+            direction = nearestPt.sub(midPoints.get(id-1));
+        }
+        
+        return direction;
+    }
+    
+    private Vec2 defineSensorRelativeCoordinate(Sensor sens, Vec2 edgeNearPt){
+        Vec2 sensorFinPt = sens.getSensorStartPosition().add(sens.getSensorUnitVec().mul((float)sens.getSensorLength()));
         
         ArrayList<Vec2> edge;
-        if(inEdge.contains(edgeNearPt)) edge = inEdge;
-        else edge = outEdge;
+        if(getInEdge().contains(edgeNearPt)) edge = getInEdge();
+        else edge = getOutEdge();
         
         int id = edge.indexOf(edgeNearPt);
-        
-        Vec2 relPosSensFinEdge = sensorFinPt.sub(edgeNearPt);
-        Vec2 axisUVec = edge.get(id+1).sub(edgeNearPt);
+        Vec2 relPosSensFinEdge = new Vec2();
+        relPosSensFinEdge = sensorFinPt.sub(edgeNearPt);
+
+        Vec2 axisUVec = null;
+        if(id+1 != edge.size()) axisUVec = edge.get(id+1).sub(edgeNearPt);
+        else axisUVec = edgeNearPt.sub(edge.get(id-1));
         
         float diffRads = axisUVec.angle(relPosSensFinEdge);
         if(diffRads > Vec2.PI/2 && id != 0)
@@ -214,33 +252,33 @@ public class Physics implements Runnable{
         return axisUVec;
     }
 
-    @Override
-    public void run() {
-        final double GAME_HERTZ = 30.0;
-        final double TIME_BETWEEN_UPDATES = 1000000000 / GAME_HERTZ;
-        double lastUpdateTime = System.nanoTime();
-        double lastRenderTime = System.nanoTime();
-        final double TARGET_FPS = 60;
-        final double TARGET_TIME_BETWEEN_RENDERS = 1000000000 / TARGET_FPS;
-      
-        while (true)
-        {
-            double now = System.nanoTime();
-
-            while( now - lastUpdateTime > TIME_BETWEEN_UPDATES)
-            {
-                stepSimulation((float)(1/GAME_HERTZ));
-                setCompleteStep(true);
-                lastRenderTime = now;
-                while ( now - lastRenderTime < TARGET_TIME_BETWEEN_RENDERS)
-                {
-                   Thread.yield();
-                   try {Thread.sleep(1);} catch(Exception e) {} 
-                   now = System.nanoTime();
-                }
-            }
-        }
-    }
+//    @Override
+//    public void run() {
+//        final double GAME_HERTZ = 30.0;
+//        final double TIME_BETWEEN_UPDATES = 1000000000 / GAME_HERTZ;
+//        double lastUpdateTime = System.nanoTime();
+//        double lastRenderTime = System.nanoTime();
+//        final double TARGET_FPS = 60;
+//        final double TARGET_TIME_BETWEEN_RENDERS = 1000000000 / TARGET_FPS;
+//      
+//        while (true)
+//        {
+//            double now = System.nanoTime();
+//
+//            while( now - lastUpdateTime > TIME_BETWEEN_UPDATES)
+//            {
+//                stepSimulation((float)(1/GAME_HERTZ));
+//                setCompleteStep(true);
+//                lastRenderTime = now;
+//                while ( now - lastRenderTime < TARGET_TIME_BETWEEN_RENDERS)
+//                {
+//                   Thread.yield();
+//                   try {Thread.sleep(1);} catch(Exception e) {} 
+//                   now = System.nanoTime();
+//                }
+//            }
+//        }
+//    }
 
     /**
      * @return the completeStep
@@ -254,5 +292,33 @@ public class Physics implements Runnable{
      */
     public void setCompleteStep(boolean completeStep) {
         this.completeStep = completeStep;
+    }
+
+    /**
+     * @return the roadSize
+     */
+    public float getRoadSize() {
+        return roadSize;
+    }
+
+    /**
+     * @return the inEdge
+     */
+    public ArrayList<Vec2> getInEdge() {
+        return inEdge;
+    }
+
+    /**
+     * @return the outEdge
+     */
+    public ArrayList<Vec2> getOutEdge() {
+        return outEdge;
+    }
+
+    /**
+     * @return the midPoints
+     */
+    public ArrayList<Vec2> getMidPoints() {
+        return midPoints;
     }
 }

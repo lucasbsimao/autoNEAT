@@ -39,7 +39,6 @@ public class Neuron {
         this.listOutLinks = copy.listOutLinks;
         this.output = copy.output;
         this.pos = copy.pos;
-        this.zResponseSum = copy.zResponseSum;
     }
     
     public Neuron(int neuronId,NeuronGene.neuron_type type, double sigResp,Vec2 split){
@@ -47,7 +46,6 @@ public class Neuron {
         this.listOutLinks = new ArrayList<>();
         this.output = 0;
         this.pos = new Vec2(0,0);
-        this.zResponseSum = 0;
         
         this.neuronType = type;
         this.neuronId = neuronId;
@@ -81,20 +79,6 @@ public class Neuron {
      */
     public void setListOutLinks(ArrayList<Link> listOutLinks) {
         this.listOutLinks = listOutLinks;
-    }
-
-    /**
-     * @return the zResponseSum
-     */
-    public double getZResponseSum() {
-        return zResponseSum;
-    }
-
-    /**
-     * @param zResponseSum the zResponseSum to set
-     */
-    public void setZResponseSum(double zResponseSum) {
-        this.zResponseSum = zResponseSum;
     }
 
     /**

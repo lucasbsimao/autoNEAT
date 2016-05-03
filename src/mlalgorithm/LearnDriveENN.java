@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 import mlalgorithm.NeuralNetwork.NeuralNet;
+import utils.CreateRandomNumber;
 import utils.NeuralNetGraph;
 
 /**
@@ -33,8 +34,8 @@ public class LearnDriveENN {
     
     private int neuralNetInputs;
     private int neuralNetOutputs;
-    private int sizePopulation;
     private int numGenerations;
+    private int sizePopulation;
     
     private int nextGenomeId;
     private int nextSpeciesId;
@@ -42,19 +43,14 @@ public class LearnDriveENN {
     private double totalFitAdjusted;
     private double averageFitAdj;
     
-    public LearnDriveENN(CarProperties carProp){
-        this(0,0,0,0);
-        this.carProp = carProp;
-    }
-    
-    public LearnDriveENN(int sizePop, int numGen, int numInputs, int numOutputs){
+    public LearnDriveENN(int sizePop, int numInputs, int numOutputs){
         this.crossOverRate = 0.7;
         this.mutationRate = 0.001;
         
         this.neuralNetInputs = numInputs;
         this.neuralNetOutputs = numOutputs;
         this.sizePopulation = sizePop;
-        this.numGenerations = numGen;
+        this.numGenerations = 0;
         
         this. bestFitness = 0;
         this.totalFitAdjusted = 0;
@@ -78,8 +74,23 @@ public class LearnDriveENN {
         tableSplitNNGraph = splitNeuralNetGraph(0, 1, 0);
     }
     
+    public ArrayList<NeuralNet> createNeuralNets(){
+        ArrayList<NeuralNet> listNets = new ArrayList<>();
+        
+        for(int i = 0; i < sizePopulation;i++){
+            int depth = calculateNetDepthGraph(listGenomes.get(i));
+            
+            NeuralNet net = listGenomes.get(i).createNeuralNet(depth);
+            
+            listNets.add(net);
+        }
+        
+        return listNets;
+    }
+    
     public ArrayList<NeuralNet> epoch(ArrayList<Double> genomesFitness){
-        Random rand = new Random(System.currentTimeMillis());
+        
+        nextGenomeId = 0;
         reset();
         
         for(int i = 0; i < listGenomes.size();i++){
@@ -87,7 +98,6 @@ public class LearnDriveENN {
             
             gen.setFitness(genomesFitness.get(i));
         }
-        
         sortGenomesByFitness();
         
         if(listGenomes.get(0).getFitness() > this.bestFitness)
@@ -96,22 +106,23 @@ public class LearnDriveENN {
         recordBestGenomes();
         
         setSpecieAndSpawn();
-        
+
+        shuffleGenomesById();
         ArrayList<Genome> newPop = new ArrayList<>();
         
         int numSpawned = 0;
-        int maxNumSpawned = 50;
+        int maxNumSpawned = 150;
         
         Genome offspring = null;
         
         for(int i = 0; i < listSpecies.size();i++){
             Species specie = listSpecies.get(i);
-            if(numSpawned > maxNumSpawned){
+            if(numSpawned < maxNumSpawned){
                 int numToSpawn = specie.getNumSpawn();
                 
                 boolean chooseBest = false;
                 
-                while(numToSpawn == 0){
+                while(numToSpawn != 0){
                     numToSpawn--;
                     if(!chooseBest){
                         offspring = specie.getLeader();
@@ -121,64 +132,74 @@ public class LearnDriveENN {
                         if(specie.getGenMembers().size() == 1){
                             offspring = specie.spawn();
                         }else{
-                            Genome g1 = listSpecies.get(i).spawn();
+                            Genome g1 = specie.spawn();
                             //Pode mudar ----------------------------
-                            if(rand.nextDouble() < crossOverRate){
-                                Genome g2 = listSpecies.get(i).spawn();
+                            if(CreateRandomNumber.getRandom().nextDouble() < crossOverRate){
+                                Genome g2 = specie.spawn();
                                 
-                                int numAtt = 5;
+                                int numAtt = 8;
                                 
-                                if(g1.getGenId() == g2.getGenId() && numAtt != 0){
+                                while(g1.getGenId() == g2.getGenId() && numAtt != 0){
                                     numAtt--;
-                                    g2 = listSpecies.get(i).spawn();
+                                    g2 = specie.spawn();
                                 }
                                     
                                 
-                                if(g1.getGenId() != g2.getGenId())
-                                    offspring = crossOver(g1,g2); 
+                                if(g1.getGenId() != g2.getGenId()){
+                                    offspring = crossOver(g1,g2);
+                                }
                             }else{
-                                offspring = g1;
+                                offspring = new Genome(g1);
                             }
                         }
-                        if(offspring == null)offspring.setGenId(nextGenomeId);
-                        else System.out.println("Offspring appointing to null pointer!");
-                        nextGenomeId++;
-                        
-                        int maxPermittedNeurons = 100;
-                        double chanceAddNode = 0.03;
-                        double chanceAddLink = 0.07;
-                        double chanceRecurrent = 0.05;
-                        double chanceMutWeights = 0.2;
-                        double chanceRepWeight = 0.1;
-                        double maxWeightPerturbation = 0.5;
-                        double maxActivationPerturbation = 0.1;
-                        double activationMutRate = 0.1;
-                        int numTries = 5;
-                        if(offspring.getListNeuronGenes().size() < maxPermittedNeurons)
-                            offspring.addNeuron(chanceAddNode, innovationDB, numTries);
-                        
-                        offspring.addLink(chanceAddLink, chanceRecurrent, innovationDB, numTries, numTries);
-                        
-                        offspring.mutateWeights(chanceMutWeights, chanceRepWeight, maxWeightPerturbation);
-                        
-                        offspring.mutateActvationResponse(activationMutRate, maxActivationPerturbation);
-                        
-                        offspring.sortGenes();
-                        
-                        newPop.add(offspring);
-                        
-                        numSpawned++;
                     }
+                    
+                    
+                    if(offspring != null)offspring.setGenId(nextGenomeId);
+                    else System.out.println("Offspring appointing to null pointer!");
+                    nextGenomeId++;
+                    
+                    int maxPermittedNeurons = 100;
+                    double chanceAddNode = 0.05;
+                    double chanceAddLink = 0.09;
+                    double chanceRecurrent = 0.07;
+                    double chanceMutWeights = 0.3;
+                    double chanceRepWeight = 0.1;
+                    double maxWeightPerturbation = 0.5;
+                    double maxActivationPerturbation = 0.2;
+                    double activationMutRate = 0.15;
+                    int numTries = 8;
+                    
+                    if(offspring.getListNeuronGenes().size() < maxPermittedNeurons)
+                        offspring.addNeuron(chanceAddNode, innovationDB, numTries);
+                    
+                    offspring.addLink(chanceAddLink, chanceRecurrent, innovationDB, numTries, numTries);
+
+                    offspring.mutateWeights(chanceMutWeights, chanceRepWeight, maxWeightPerturbation);
+
+                    offspring.mutateActvationResponse(activationMutRate, maxActivationPerturbation);
+                    
+                    offspring.sortGenes();
+                    
+                    newPop.add(offspring);
+                    
+                    numSpawned++;
+                    
                 }
             }
         }
         
+        shuffleGenomesById();
+
+        System.out.println("Pop:" + numSpawned);
         if(maxNumSpawned > numSpawned){
             int delta = maxNumSpawned - numSpawned;
-            
             while(delta != 0){
+
                 delta--;
-                newPop.add(tournamentSelection(this.sizePopulation/5));
+                Genome gen = new Genome(tournamentSelection(this.sizePopulation/5));
+                gen.setGenId(nextGenomeId);
+                newPop.add(gen);
             }
         }
         
@@ -187,17 +208,21 @@ public class LearnDriveENN {
         ArrayList<NeuralNet> listNN = new ArrayList<>();
         for(int i = 0; i < listGenomes.size();i++){
             int depth = calculateNetDepthGraph(listGenomes.get(i));
+            
             NeuralNet nn = listGenomes.get(i).createNeuralNet(depth);
             
             listNN.add(nn);
         }
         
+        numGenerations++;
+        
         return listNN;
     }
     
-    public Genome crossOver(Genome mom, Genome dad){
+    private Genome crossOver(Genome mom, Genome dad){
         boolean momSelected = true;
-        Random rand = new Random(System.currentTimeMillis());
+        Random rand = CreateRandomNumber.getRandom();
+        //System.out.println("CrossOver");
         
         if(mom.getFitness() == dad.getFitness()){
             if(mom.getListLinkGenes().size() == dad.getListLinkGenes().size()){
@@ -223,32 +248,32 @@ public class LearnDriveENN {
         
         int curMom = 0;
         int curDad = 0;
-        while(!(curMom == momLinks.size()-1) && !(curDad == dadLinks.size()-1)){
-            if(curMom == momLinks.size()-1 && curDad != dadLinks.size()-1){
+        while(!(curMom == momLinks.size()) && !(curDad == dadLinks.size())){
+            if(curMom == momLinks.size() && curDad != dadLinks.size()){
                 if(!momSelected)
-                    linkSelected = dadLinks.get(curDad);
+                    linkSelected = new LinkGene(dadLinks.get(curDad));
                 
                 curDad++;
-            }else if(curMom != momLinks.size()-1 && curDad == dadLinks.size()-1){
+            }else if(curMom != momLinks.size() && curDad == dadLinks.size()){
                 if(momSelected)
-                    linkSelected = momLinks.get(curMom);
+                    linkSelected = new LinkGene(momLinks.get(curMom));
                 
                 curMom++;
             }else if(momLinks.get(curMom).getInovationID() < dadLinks.get(curDad).getInovationID()){
                 if(momSelected)
-                    linkSelected = momLinks.get(curMom);
+                    linkSelected = new LinkGene(momLinks.get(curMom));
                 
                 curMom++;
             }else if(momLinks.get(curMom).getInovationID() > dadLinks.get(curDad).getInovationID()){
                 if(!momSelected)
-                    linkSelected = dadLinks.get(curDad);
+                    linkSelected = new LinkGene(dadLinks.get(curDad));
                 
                 curDad++;
             }else if(momLinks.get(curMom).getInovationID() == dadLinks.get(curDad).getInovationID()){
-                if(rand.nextFloat()< 0.5F){
-                    linkSelected = momLinks.get(curMom);
+                if(momSelected){
+                    linkSelected = new LinkGene(momLinks.get(curMom));
                 }else{
-                    linkSelected = dadLinks.get(curDad);
+                    linkSelected = new LinkGene(dadLinks.get(curDad));
                 }
                 
                 curMom++;
@@ -263,42 +288,52 @@ public class LearnDriveENN {
             }
             
             addNeuronID(linkSelected.getFromNeuron(), listNeuronsId);
-            addNeuronID(linkSelected.getToNeuron(), listNeuronsId);   
+            addNeuronID(linkSelected.getToNeuron(), listNeuronsId);
         }
         
+//        for(int j = 0; j < listGenomes.size();j++){
+//            System.out.println("GenId1:" + listGenomes.get(j).getGenId());
+//        }
+        
         Collections.sort(listNeuronsId);
+        
+//        for(int j = 0; j < listGenomes.size();j++){
+//            System.out.println("GenId2:" + listGenomes.get(j).getGenId());
+//        }
         
         for(int i = 0; i < listNeuronsId.size();i++){
             neuronsOffspring.add(innovationDB.createNeuronFromId(listNeuronsId.get(i)));
         }
-        
+
         Genome genome = new Genome(nextGenomeId,linksOffspring,neuronsOffspring,neuralNetInputs,neuralNetOutputs);
         nextGenomeId++;
-        
         return genome;
     }
     
-    public Genome tournamentSelection(int selection){
-        double bestFitness = 0;
+    private Genome tournamentSelection(int selection){
+        double bestFitnessToun = 0;
         int choosen = 0;
-        Random rand = new Random(System.currentTimeMillis());
+        Random rand = CreateRandomNumber.getRandom();
         
         for(int i = 0; i < selection;i++){
             int tryId = rand.nextInt(listGenomes.size());
-            if(listGenomes.get(tryId).getFitness() > bestFitness){
+            if(listGenomes.get(tryId).getFitness() > bestFitnessToun){
                 choosen = tryId;
-                bestFitness = listGenomes.get(tryId).getFitness();
+                bestFitnessToun = listGenomes.get(tryId).getFitness();
             }
         }
+        nextGenomeId++;
+        
         
         return listGenomes.get(choosen);
     }
     
-    public void setSpecieAndSpawn(){
+    private void setSpecieAndSpawn(){
         boolean addSpecie = false;
         double thresholdComp = 0.26;
         
         for(int i = 0; i < listGenomes.size();i++){
+            //System.out.println("genID:" + listGenomes.get(i).getGenId());
             for(int j = 0; j < listSpecies.size();j++){
                 double compability = listGenomes.get(i).getCompatibilityScore(listSpecies.get(j).getLeader());
                 
@@ -336,7 +371,7 @@ public class LearnDriveENN {
         }
     }
     
-    public void recordBestGenomes(){
+    private void recordBestGenomes(){
         int numBestRecords = 5;
         
         listBestGenomes.clear();
@@ -346,7 +381,7 @@ public class LearnDriveENN {
         }
     }
     
-    public void addNeuronID(int neuronId, ArrayList<Integer> listNeuronsId){
+    private void addNeuronID(int neuronId, ArrayList<Integer> listNeuronsId){
         for(int i = 0; i < listNeuronsId.size();i++){
             if(listNeuronsId.get(i) == neuronId)
                 return;
@@ -355,18 +390,18 @@ public class LearnDriveENN {
         listNeuronsId.add(neuronId);
     }
     
-    public void adjustGenomesFitness(){
+    private void adjustGenomesFitness(){
         for(int i = 0; i < listSpecies.size(); i++){
             listSpecies.get(i).adjustFitness();
         }
     }
     
-    public int calculateNetDepthGraph(Genome gen){
+    private int calculateNetDepthGraph(Genome gen){
         int max = 0;
         
         for(int i = 0; i < gen.getListNeuronGenes().size();i++){
             for(int j = 0; j < tableSplitNNGraph.size();j++){
-                NeuralNetGraph graph = tableSplitNNGraph.get(i);
+                NeuralNetGraph graph = tableSplitNNGraph.get(j);
                 if(gen.splitNNGraphY(i) == graph.getVal() && graph.getDepth() > max){
                     max = graph.getDepth();
                 }
@@ -413,13 +448,49 @@ public class LearnDriveENN {
         }
     }
     
-    public void sortGenomesByFitness(){
-        Collections.sort(listGenomes,(a, b) -> a.getFitness()> b.getFitness() ? -1 : a.getFitness()== b.getFitness()? 0 : 1);
+    private void sortGenomesByFitness(){
+        //Collections.sort(listGenomes,(a, b) -> a.getFitness()> b.getFitness() ? -1 : a.getFitness() < b.getFitness()? 1 : 0);
+        for(int i = 0; i < listGenomes.size();i++){
+            double curMax = -99999;
+            int idMax = -1;
+            if(i+1 == listGenomes.size()) break;
+            for(int j = i+1; j < listGenomes.size();j++){
+                Genome curComp = listGenomes.get(j);
+                if(curMax < curComp.getFitness()){
+                    curMax = curComp.getFitness();
+                    idMax = j;
+                }
+            }
+            
+            Genome temp = new Genome(listGenomes.get(i));
+            
+            listGenomes.set(i,listGenomes.get(idMax));
+            listGenomes.set(idMax,temp);
+        }
         
         if(listGenomes.get(0).getFitness() > this.bestFitness){
             this.bestFitness = listGenomes.get(0).getFitness();
         }
         
         recordBestGenomes();
+    }
+    
+    private void shuffleGenomesById(){
+        if(listGenomes.isEmpty()) return;
+        for(int i = 0; i < listGenomes.size();i++){
+            int idMax = 999999;
+            if(i+1 == listGenomes.size()) break;
+            for(int j = i+1; j < listGenomes.size();j++){
+                Genome curComp = listGenomes.get(j);
+                if(idMax > curComp.getGenId()){
+                    idMax = j;
+                }
+            }
+            
+            Genome temp = new Genome(listGenomes.get(i));
+            
+            listGenomes.set(i,listGenomes.get(idMax));
+            listGenomes.set(idMax,temp);
+        }
     }
 }

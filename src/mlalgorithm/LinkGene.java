@@ -30,6 +30,15 @@ public class LinkGene {
         this.recurrent = false;
     }
     
+    public LinkGene(LinkGene link){
+        this.enabled = link.enabled;
+        this.fromNeuron = link.fromNeuron;
+        this.inovationID = link.inovationID;
+        this.recurrent = link .recurrent;
+        this.toNeuron = link.toNeuron;
+        this.weight = link.weight;
+    }
+    
     public LinkGene(int from, int to, int iId, double weight, boolean enabled, boolean recurrent){
         this.fromNeuron = from;
         this.toNeuron = to;

@@ -6,12 +6,12 @@
 package carlearndriveenn;
 
 import utils.Vec2;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import javax.swing.JFrame;
 import javax.swing.Timer;
+import mlalgorithm.LearnDriveENN;
+import utils.CreateRandomNumber;
 
 /**
  *
@@ -22,7 +22,9 @@ public class Simulator extends JFrame{
     Timer timer;
 
     public void initUI() {
+        CreateRandomNumber.initRand();
         CarProperties car = new CarProperties(0,new Vec2(160,60));
+        
         Drawing draw = new Drawing(car);
         add(draw);
         
@@ -35,7 +37,7 @@ public class Simulator extends JFrame{
             }
         });    
         
-        while(draw.getVecInBorder().size() == 0 && draw.getVecOutBorder().size() == 0){
+        while(draw.getVecInBorder().size() == 0 && draw.getVecOutBorder().size() == 0 ){
             try{
                 Thread.sleep(60);
             }catch(InterruptedException ex){
@@ -43,8 +45,8 @@ public class Simulator extends JFrame{
             }
         }
         
-        Physics physics = new Physics(car,draw.getVecInBorder(),draw.getVecOutBorder(),draw.getVecMidPoints(),draw.getRoadSize());
-        Thread th = new Thread(physics);
+        Controller control = new Controller(car,draw.getVecInBorder(),draw.getVecOutBorder(),draw.getVecMidPoints(),draw.getRoadSize());
+        Thread th = new Thread(control);
         th.start();
 
         setTitle("Points");

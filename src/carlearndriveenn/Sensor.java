@@ -12,22 +12,24 @@ import utils.Vec2;
  * @author lucas
  */
 public class Sensor {
-    private float sensorLength;
+    private double sensorLength;
     private Vec2 sensorStartPosition;
     private Vec2 sensorUnitVec;
-    private float sensorStage;
+    private double sensorStage;
+    private double taxSensorStage;
     
     public Sensor(){
         sensorStage = 0;
         sensorStartPosition = new Vec2(-1,-1);
         sensorUnitVec = new Vec2(-1,-1);
         sensorLength = 0;
+        taxSensorStage = 0;
     }
 
     /**
      * @return the sensorLength
      */
-    public float getSensorLength() {
+    public double getSensorLength() {
         return sensorLength;
     }
 
@@ -69,7 +71,7 @@ public class Sensor {
     /**
      * @return the sensorStage
      */
-    public float getSensorStage() {
+    public double getSensorStage() {
         return sensorStage;
     }
 
@@ -78,5 +80,19 @@ public class Sensor {
      */
     public void setSensorStage(float sensorStage) {
         this.sensorStage = sensorStage;
+    }
+
+    /**
+     * @return the taxSensorStage
+     */
+    public double getTaxSensorStage() {
+        return taxSensorStage;
+    }
+
+    /**
+     * @param taxSensorStage the taxSensorStage to set
+     */
+    public void setTaxSensorStage(double taxSensorStage) {
+        this.taxSensorStage = taxSensorStage;
     }
 }

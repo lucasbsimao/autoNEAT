@@ -58,15 +58,19 @@ class Drawing extends JPanel implements Runnable{
         
         midPoints.add(new Vec2(140,60));
         try{
-            addRoadSegment(920, 70, 90);
-            addRoadSegment(400, 25, 90);
-            addRoadSegment(100, 80, 90);
-            addRoadSegment(200, 100, -90);
-            addRoadSegment(300, 70, -30);
-            addRoadSegment(200, 25, -90);
-            addRoadSegment(50, 25, 120);
-            addRoadSegment(50, 70, 120);
-            addRoadSegment(150, 25, -120);
+            addRoadSegment(50, 70, 45);
+            addRoadSegment(50, 25, -45);
+            addRoadSegment(100, 80, 45);
+            addRoadSegment(50, 70, 45);
+            addRoadSegment(50, 25, -45);
+            addRoadSegment(100, 80, 45);
+            addRoadSegment(50, 70, 45);
+//            addRoadSegment(200, 100, -90);
+//            addRoadSegment(300, 70, -30);
+//            addRoadSegment(200, 25, -90);
+//            addRoadSegment(50, 25, 120);
+//            addRoadSegment(50, 70, 120);
+//            addRoadSegment(150, 25, -120);
             
             createBorders();
             createFinishBorders();
@@ -239,22 +243,32 @@ class Drawing extends JPanel implements Runnable{
    
         transformCar();
         
-        g2d.setStroke(new BasicStroke(2));
-        ArrayList<Sensor> sensors = carProp.getSensorsVec();
-        if(sensors != null){
-            for(int i = 0; i < carProp.getSensorsVec().size();i++){
-                Sensor sens = sensors.get(i);
-                float stage = sens.getSensorStage();
-                g2d.setPaint(new Color(1, 1-stage, 1-stage));
-                Vec2 sensPos = sens.getSensorStartPosition();
-                Vec2 sensFinPos = sensPos.add(sens.getSensorUnitVec().mul(sens.getSensorLength()));
-                g2d.draw(new Line2D.Float((int)sensPos.x, (int)sensPos.y, (int)sensFinPos.x,(int)sensFinPos.y));
-            }
-        }
-        
         AffineTransformOp op = new AffineTransformOp(carTrans, AffineTransformOp.TYPE_BILINEAR);
 
         g2d.drawImage(op.filter(bicar, null), (int)posImageCar.x, (int)posImageCar.y, null);
+        
+        if(carProp.isCrashed()){
+            g2d.setFont(new Font("TimesRoman", Font.PLAIN, 20));
+            g2d.setColor(Color.red);
+            g2d.drawString("Recalculating best strategy...", 700, 100);
+        }
+        
+        g2d.setStroke(new BasicStroke(1));
+        ArrayList<Sensor> sensors = new ArrayList(carProp.getSensorsVec());
+        if(sensors != null){
+            for(int i = 0; i < sensors.size();i++){
+                Sensor sens = sensors.get(i);
+                try{
+                    float stage = (float)sens.getSensorStage();
+                    g2d.setPaint(new Color(1, 1-stage, 1-stage));
+                    Vec2 sensPos = sens.getSensorStartPosition();
+                    Vec2 sensFinPos = sensPos.add(sens.getSensorUnitVec().mul((float)sens.getSensorLength()));
+                    g2d.draw(new Line2D.Float((int)sensPos.x, (int)sensPos.y, (int)sensFinPos.x,(int)sensFinPos.y));
+                }catch(java.lang.IllegalArgumentException ex){
+                    float stage = (float)sens.getSensorStage();
+                }
+            }
+        }
         
         g2d.dispose();
     }

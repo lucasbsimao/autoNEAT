@@ -45,7 +45,7 @@ public class NeuralNet {
         else
             flushCont = 1;
         
-        for(int i = 0; i < flushCont;flushCont++){
+        for(int i = 0; i < flushCont;i++){
             outputs.clear();
             
             int neuronId = 0;
@@ -59,7 +59,7 @@ public class NeuralNet {
             neuronId++;
             
             while(neuronId < listNeurons.size()){
-                double sum = 0;
+                Double sum = 0.0;
                 
                 Neuron neuron = listNeurons.get(neuronId);
                 
@@ -70,11 +70,19 @@ public class NeuralNet {
                 
                 neuron.setOutput(sigmoid(sum,neuron.getSigmoidResponse()));
                 
-                if(neuron.getNeuronType() == NeuronGene.neuron_type.output)
+                
+                
+                if(neuron.getNeuronType() == NeuronGene.neuron_type.output){
                     outputs.add(neuron.getOutput());
+                }
+                    
                 
                 neuronId++;
             }
+        }
+        
+        if(outputs.size() == 1){
+            System.out.println("");
         }
         
         if(run_type.snapshot == running){

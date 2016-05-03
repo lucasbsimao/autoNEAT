@@ -21,7 +21,9 @@ public class InnovationsDataBase {
     public InnovationsDataBase(ArrayList<NeuronGene> listNeurons, ArrayList<LinkGene> listLinks){
         this();
         for(int i = 0;i<listNeurons.size();i++){
-            listInnovations.add(new Innovation(listNeurons.get(i),nextInnovationNum,nextNeuronId++));
+            Innovation inn = new Innovation(listNeurons.get(i),nextInnovationNum,nextNeuronId);
+            listInnovations.add(inn);
+            nextNeuronId++;
             nextInnovationNum++;
         }
         
@@ -43,12 +45,12 @@ public class InnovationsDataBase {
     }
     
     public int checkInnovation(int in, int out, Innovation.innovation_type innovType){
-        for(int i = 0; i < listInnovations.size();i++){
-            if(listInnovations.get(i).getInNeuron() == in && 
-                    listInnovations.get(i).getOutNeuron() == out && 
-                    listInnovations.get(i).getInovationType() == innovType){
+        for(int i = 0; i < getListInnovations().size();i++){
+            if(getListInnovations().get(i).getInNeuron() == in && 
+                    getListInnovations().get(i).getOutNeuron() == out && 
+                    getListInnovations().get(i).getInovationType() == innovType){
                 
-                return listInnovations.get(i).getId();
+                return getListInnovations().get(i).getId();
             }
         }
         
@@ -57,9 +59,7 @@ public class InnovationsDataBase {
     
     public int createInnovation(int in, int out, Innovation.innovation_type innovType){
         //MODIFICADO -------------------------------------
-        createInnovation(in, out, innovType, NeuronGene.neuron_type.none, new Vec2(-1,-1));
-        
-        return (nextNeuronId-1);
+        return createInnovation(in, out, innovType, NeuronGene.neuron_type.none, new Vec2(-1,-1));
     }
     
     public int createInnovation(int in, int out, Innovation.innovation_type innovType, NeuronGene.neuron_type neuronType,Vec2 coord){
@@ -69,7 +69,7 @@ public class InnovationsDataBase {
             nextNeuronId++;
         }
         
-        listInnovations.add(innov);
+        getListInnovations().add(innov);
         
         nextInnovationNum++;
         
@@ -79,24 +79,33 @@ public class InnovationsDataBase {
     public NeuronGene createNeuronFromId(int neuronId){
         NeuronGene neuron = null;
         //ESSE MÉTODO PODE ESTAR ERRADO------------------------------------------------
-        for(int i = 0; i < listInnovations.size(); i++){
-            if(listInnovations.get(i).getNeuronId() == neuronId){
-                neuron = new NeuronGene(listInnovations.get(i).getNeuronId(),
-                        NeuronGene.neuron_type.hidden, 
+        for(int i = 0; i < getListInnovations().size(); i++){
+            if(getListInnovations().get(i).getNeuronId() == neuronId){
+                neuron = new NeuronGene(getListInnovations().get(i).getNeuronId(),
+                        getListInnovations().get(i).getNeuronType(), 
                         false, 
-                        0, 
-                        listInnovations.get(i).getPosition());
+                        1, 
+                        getListInnovations().get(i).getPosition());
+                
+                return neuron;
             }
         }
-        
+        System.out.println("-------------------------------------------------------------------------");
         return neuron;
     } 
     
     public int getNeuronIdByInnovId(int innov){
-        return listInnovations.get(innov).getNeuronId();
+        return getListInnovations().get(innov).getNeuronId();
     }
     
     public int nextNumber(){
         return nextInnovationNum;
+    }
+
+    /**
+     * @return the listInnovations
+     */
+    public ArrayList<Innovation> getListInnovations() {
+        return listInnovations;
     }
 }

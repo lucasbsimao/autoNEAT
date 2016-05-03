@@ -88,6 +88,8 @@ public class Vec2 implements Serializable {
       
       Vec2 result = vec.dot(vec2);
       float arccos = result.x + result.y;
+      if(arccos > 1) arccos = 1;
+      if(arccos < -1) arccos = -1;
       float rads = (float)Math.acos(arccos);
       return rads;
   }
