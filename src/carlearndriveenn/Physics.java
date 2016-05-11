@@ -25,6 +25,7 @@ package carlearndriveenn;
 
 import utils.Vec2;
 import java.util.ArrayList;
+import utils.KeyPressed;
 
 /**
  *
@@ -52,6 +53,7 @@ public class Physics{
     }
     
     public void stepSimulation(float timeStep){
+        
             calculateCarPosition(timeStep);
         if(!carReachFinish()){
             calculateCarSensorStage();
@@ -96,6 +98,7 @@ public class Physics{
 
         for(int i = 0; i < carEdgePts.size();i++){
             if(tangentCollision(nearRoadMidPts.get(i),nearRoadEdgePts.get(i),carEdgePts.get(i))){
+                carProp.isDebugCrash = false;
                 carProp.setCrashed(true);
                 
                 carProp.setPosition(new Vec2(160,60));
@@ -107,12 +110,17 @@ public class Physics{
     
     private boolean tangentCollision(Vec2 midPoint, Vec2 edgePoint,Vec2 carEdgePoint){
         Vec2 normalVec = midPoint.sub(edgePoint);
-        normalVec.normalize();
+        //MODIFIQUEI
+        //normalVec.normalize();
         
         Vec2 relCarMidPt = carEdgePoint.sub(edgePoint);
-        relCarMidPt.normalize();
-        float absRad = (float) Math.abs(normalVec.angle(relCarMidPt));
-        if(absRad > Vec2.PI/2){
+        //relCarMidPt.normalize();
+        double absRad = Math.abs(normalVec.angle(relCarMidPt));
+        double angThresrold = Vec2.PI/2;
+        if(absRad > angThresrold){
+            //carProp.debugEdPointCar = carEdgePoint;
+            //carProp.debugEdPointRoad = edgePoint;
+            //carProp.isDebugCrash = true;
             return true;
         }
         
@@ -162,7 +170,8 @@ public class Physics{
     }
     
     private void calculateCarSensorStage() {
-        ArrayList<Sensor> carSensors = new ArrayList<>(carProp.getSensorsVec());
+        //MODIFIQUEI
+        ArrayList<Sensor> carSensors = carProp.getSensorsVec();
         double dSensReach = 0;
         for(int i = 0; i < carSensors.size();i++){
             Sensor sens = carSensors.get(i);

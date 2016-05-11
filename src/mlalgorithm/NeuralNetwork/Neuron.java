@@ -35,7 +35,6 @@ public class Neuron {
     private ArrayList<Link> listInLinks;
     private ArrayList<Link> listOutLinks;
     
-    private double zResponseSum;
     private double output;
     
     private NeuronGene.neuron_type neuronType;
@@ -47,6 +46,9 @@ public class Neuron {
     private Vec2 pos;
     
     private Vec2 split;
+    
+    
+    public Neuron(){}
     
     public Neuron(Neuron copy){
         this.neuronType = copy.neuronType;

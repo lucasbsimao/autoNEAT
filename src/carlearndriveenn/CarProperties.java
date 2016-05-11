@@ -42,9 +42,24 @@ public class CarProperties {
     private double fitness;
     private boolean champion;
     
+    private final double stepVelocity = 0.5;
     private final double maxVelocity = 20;
+    
+    public double getMaxVelocity(){
+        return maxVelocity;
+    }
+    
+    private double velLeft;
+    private double velRight;
+    
     public static final double constPunishSensor = 40;
     public static double maxAngVelocity;
+    
+    
+    
+    public Vec2 debugEdPointCar;
+    public Vec2 debugEdPointRoad;
+    public boolean isDebugCrash;
     
     private boolean hasCrashed;
     
@@ -56,8 +71,15 @@ public class CarProperties {
         angVelocity = 0.0F;
         fitness = 0.0F;
         
+        velLeft = 0;
+        velRight = 0;
+        
         hasCrashed = false;
         champion = false;
+        
+        debugEdPointCar = new Vec2(-1,-1);
+        debugEdPointRoad = new Vec2(-1,-1);
+        isDebugCrash = false;
     }
     
     public CarProperties(CarProperties car){
@@ -76,7 +98,7 @@ public class CarProperties {
     public void setCarDimensions(float width, float height){
         this.width = width;
         this.height = height;
-        CarProperties.maxAngVelocity = maxVelocity/width;
+        CarProperties.maxAngVelocity = maxVelocity/(height/2);
     }
     
     public float getWidth(){
@@ -116,14 +138,35 @@ public class CarProperties {
     }
 
     public void setWheelVelocities(float left, float right) {
-        left *= maxVelocity;
-        right *= maxVelocity;
-        float centVelocity = (float)Math.abs((left + right)/2);
-        this.linVelocity = frontVec.mul(centVelocity);
+        left -= 0.5;
+        right -= 0.5;
+        
+        velLeft += left;
+        velRight += right;
+        
+        if(velLeft > maxVelocity) velLeft = maxVelocity;
+        if(velRight > maxVelocity) velRight = maxVelocity;
+        if(velLeft < -maxVelocity) velLeft = -maxVelocity;
+        if(velRight < -maxVelocity) velRight = -maxVelocity;
+        
+        left = (float)(velLeft*stepVelocity);
+        right = (float)(velRight*stepVelocity);
+        
+        float maxVel = left > right ? left : right;
+        float minVel = left < right ? left : right;
+
+        float incTan = (maxVel - minVel)/height;
+        float rayMotion = incTan*minVel+height/2;
+            
+        float centVelocity = (left + right)/2;
+        this.linVelocity = frontVec.mul(centVelocity);//new Vec2(frontVec.mul(centVelocity).x+linVelocity.y,frontVec.mul(centVelocity).x+linVelocity.y);
+        
+        float ray = (maxVel/minVel - 1)/(height/2);
+        ray += height/2;
         
         if(right < left) centVelocity *= -1;
         
-        this.angVelocity = centVelocity/(height/2);
+        this.angVelocity = centVelocity/(rayMotion);
         //if(this.angVelocity > maxVelocity/(height/2)) this.angVelocity = (float)maxVelocity/(height/2);
         //if(this.angVelocity < maxVelocity/(height/2)) this.angVelocity = (float)-maxVelocity/(height/2);
     }
@@ -171,7 +214,8 @@ public class CarProperties {
         Vec2 sideVec = new Vec2(frontVec.rotated(-Vec2.PI/2));
         float sensorIntervalAng = Vec2.PI/5;
         
-        float sensParam = this.width < this.height ? this.width : this.height;
+        float sensParam = this.width > this.height ? this.width : this.height;
+         sensParam = 20;
         float actSensAng = 0;
         while(actSensAng <= Vec2.PI){
             
@@ -182,7 +226,7 @@ public class CarProperties {
             Vec2 vecActSensPt = sideVec.rotated(actSensAng);
             sens.setSensorUnitVec(new Vec2(vecActSensPt));
             //Vec2 sensorPt = vecActSensPt.mul(sensParam);
-            sens.setSensorStartPosition(this.position.add(frontVec.mul(sensParam)));
+            sens.setSensorStartPosition(this.position.add(frontVec.mul(height)));
 
             sensorsVec.add(sens);
 
@@ -224,6 +268,8 @@ public class CarProperties {
     public void reset(){
         this.angVelocity = 0;
         this.setAngle(0);
+        this.velLeft = 0;
+        this.velRight = 0;
         this.linVelocity = new Vec2(0,0);
     }
 

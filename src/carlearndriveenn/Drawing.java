@@ -27,6 +27,7 @@ import utils.Vec2;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.geom.*;
 import java.awt.image.*;
 import java.io.File;
@@ -36,11 +37,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
+import utils.KeyPressed;
 
 
 class Drawing extends JPanel implements Runnable{
     private final float roadSize;
     private CarProperties carProp;
+    
+    private boolean wPressed;
+    private boolean pPressed;
     
     private BufferedImage bigrass;
     private BufferedImage bicar;
@@ -61,6 +66,8 @@ class Drawing extends JPanel implements Runnable{
     private Vec2 posImageCar;
     
     public Drawing(CarProperties car){
+        this.wPressed = false;
+        this.pPressed = false;
         carProp = car;
         roadSize = 50;
         posImageCar = new Vec2(-1,-1);
@@ -77,7 +84,7 @@ class Drawing extends JPanel implements Runnable{
         midPoints.add(new Vec2(140,60));
         try{
             addRoadSegment(300, 70, 90);
-            addRoadSegment(300, 25, 90);
+            addRoadSegment(300, 50, 90);
             addRoadSegment(200, 80, 180);
             addRoadSegment(30, 50,-180);
 //            addRoadSegment(50, 25, -45);
@@ -286,6 +293,11 @@ class Drawing extends JPanel implements Runnable{
                     float stage = (float)sens.getSensorStage();
                 }
             }
+        }
+        
+        if(carProp.isDebugCrash){
+            g2d.setPaint(new Color(1, 0, 0));
+            g2d.draw(new Line2D.Float((int)carProp.debugEdPointCar.x, (int)carProp.debugEdPointCar.y, (int)carProp.debugEdPointRoad.x,(int)carProp.debugEdPointRoad.y));
         }
         
         g2d.dispose();

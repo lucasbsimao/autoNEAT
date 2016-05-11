@@ -469,7 +469,7 @@ public class LearnDriveENN {
     private void sortGenomesByFitness(){
         //Collections.sort(listGenomes,(a, b) -> a.getFitness()> b.getFitness() ? -1 : a.getFitness() < b.getFitness()? 1 : 0);
         for(int i = 0; i < listGenomes.size();i++){
-            double curMax = -99999;
+            double curMax = -999999999;
             int idMax = -1;
             if(i+1 == listGenomes.size()) break;
             for(int j = i+1; j < listGenomes.size();j++){

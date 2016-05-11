@@ -24,8 +24,11 @@
 package carlearndriveenn;
 
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mlalgorithm.LearnDriveENN;
 import mlalgorithm.NeuralNetwork.NeuralNet;
+import utils.KeyPressed;
 import utils.Vec2;
 
 /**
@@ -41,14 +44,17 @@ public class Controller implements Runnable{
     
     private final double GAME_HERTZ = 30.0;
     private final int numGenerations = 250;
+    private final int testTimeLeft = 300;
     
     public Controller(CarProperties carProp,ArrayList<Vec2> inEdge,ArrayList<Vec2> outEdge,ArrayList<Vec2> midPoints, float roadSize){
         this.physics = new Physics(carProp,inEdge,outEdge,midPoints,roadSize);
         //Sensors + lin velocity + ang velocity
-        this.learnDrive = new LearnDriveENN(150, carProp.getSensorsVec().size(), 2);
+        this.learnDrive = new LearnDriveENN(150, carProp.getSensorsVec().size()+2, 2);
         this.carProp = carProp;
         
         listNets = learnDrive.createNeuralNets();
+        
+        KeyPressed.initListener();
     }
     
     private NeuralNet runAlgorithm(){
@@ -85,39 +91,50 @@ public class Controller implements Runnable{
             
             double sum = 0;
             int cont = 0;
+            
+            float taxSensFac = 5;
             while(!carTest.isCrashed()){
+                
                 Vec2 prevPos = new Vec2(carTest.getPosition());
-                
-                ArrayList<Double> inputs = new ArrayList<>(carTest.getSensorStages());
-                //inputs.add((double)carTest.getLinVelocity().length());
-                //inputs.add((double)carTest.getAngVelocity());
+
+                ArrayList<Double> inputs = new ArrayList<>(carTest.getTaxSensorStages());
+                inputs.add((double)carTest.getLinVelocity().length()/carProp.getMaxVelocity());
+                inputs.add((double)carTest.getAngVelocity()/CarProperties.maxAngVelocity);
                 ArrayList<Double> outputs = listNets.get(i).feed(inputs, NeuralNet.run_type.active);
-                
+
                 carTest.setWheelVelocities(outputs.get(0).floatValue(), outputs.get(1).floatValue());
-                
+
                 physicsTest.stepSimulation((float)(1/GAME_HERTZ));
                 Vec2 dDistTraveledVec = carTest.getPosition().sub(prevPos);
                 double dDistTraveled = dDistTraveledVec.length();
                 Vec2 uDirRoad = physicsTest.calculateRoadDirection(carTest.getPosition());
                 double angle = uDirRoad.angle(carTest.getFrontVector());
-                
+
                 Double test = angle;
                 if(test.isNaN()){
                     System.out.println("");
                 }
-                
+
                 if(!carTest.isCrashed()){
-                    sum += dDistTraveled*Math.cos(angle);
+                    float forwardFactor = 50;
+                    if(angle > Vec2.PI/2)
+                        forwardFactor = 100;
+
+                    sum += dDistTraveled*Math.cos(angle)*forwardFactor;
+                }
+
+                if(testTimeLeft < cont && sum+carTest.getFitness() < 10){
+                    sum -= 300;
+                    break;
+                }
+
+                ArrayList<Double> taxSens = carTest.getTaxSensorStages();
+                
+                for(int j = 0; i < taxSens.size();j++){
+                    sum += taxSens.get(i)*taxSensFac;
                 }
                 
-//                if(testTimeLeft < cont && sum < 10){
-//                    sum -= 200;
-//                    break;
-//                }
-                   
-                
                 cont++;
-                
             }
             
             listFitness.add(sum+carTest.getFitness());
@@ -125,6 +142,12 @@ public class Controller implements Runnable{
             
             if(minScore > totalScore)
                 minScore = totalScore;
+            
+            try {    
+                Thread.sleep(10);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Controller.class.getName()).log(Level.SEVERE, null, ex);
+            }
             
         }
         int size = listFitness.size();
@@ -150,6 +173,7 @@ public class Controller implements Runnable{
         
         int actGeneration = 0;
         NeuralNet neuralNet = runAlgorithm();
+        int cont = 0;
         while (true)
         {
             double now = System.nanoTime();
@@ -162,14 +186,31 @@ public class Controller implements Runnable{
                     //if(actGeneration >= numGenerations)
                         carProp.setCrashed(false);
                     actGeneration++;
-                }else{
-                    ArrayList<Double> inputs = new ArrayList<>(carProp.getSensorStages());
-                    //inputs.add((double)carProp.getLinVelocity().length());
-                    //inputs.add((double)carProp.getAngVelocity()/CarProperties.maxAngVelocity);
+                }else{  
+                    ArrayList<Double> inputs = new ArrayList<>(carProp.getTaxSensorStages());
+                    inputs.add((double)carProp.getLinVelocity().length()/carProp.getMaxVelocity());
+                    inputs.add((double)carProp.getAngVelocity()/CarProperties.maxAngVelocity);
+                    
                     ArrayList<Double> outputs = neuralNet.feed(inputs, NeuralNet.run_type.active);
                     
                     carProp.setWheelVelocities(outputs.get(0).floatValue(), outputs.get(1).floatValue());
-                    physics.stepSimulation((float)(1/GAME_HERTZ));
+                    
+                    if(KeyPressed.isPPressed()){
+                        
+                        if(KeyPressed.isWPressed()){
+                            physics.stepSimulation((float)(1/GAME_HERTZ));
+                            KeyPressed.setWPressed(false);
+                        }
+                    }else{
+                        physics.stepSimulation((float)(1/GAME_HERTZ));
+                    }
+                    cont ++;
+                    if(cont > testTimeLeft && carProp.getFitness() < 10){
+                        carProp.setCrashed(true);
+                        carProp.setPosition(new Vec2(160,60));
+                        carProp.reset();
+                        cont = 0;
+                    }
                 }
                 
                 lastRenderTime = now;

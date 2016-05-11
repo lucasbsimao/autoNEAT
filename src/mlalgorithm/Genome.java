@@ -222,9 +222,10 @@ public class Genome {
     }
     
     
-    public void addNeuron(double mutationRate,InnovationsDataBase innovationsDB, int numTrysOldLink){
+    public void addNeuron(double mutationRate,InnovationsDataBase innovationsDB,int numTrysOldLink){
         if(CreateRandomNumber.getRandom().nextDouble() > mutationRate)
             return;
+        
         
         //System.out.println("new Neuron");
         boolean validLink = false;

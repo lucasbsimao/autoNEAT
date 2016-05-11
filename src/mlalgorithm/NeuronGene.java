@@ -25,6 +25,7 @@ package mlalgorithm;
 
 import utils.Vec2;
 import carlearndriveenn.*;
+import mlalgorithm.NeuralNetwork.Neuron;
 
 /**
  *
@@ -35,7 +36,7 @@ public class NeuronGene {
     public static enum neuron_type{input,hidden,bias,output,none};
     private int neuronId;
     
-    private neuron_type neuronType;
+    protected neuron_type neuronType;
     
     private boolean isRecurent;
     
