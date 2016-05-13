@@ -111,16 +111,16 @@ public class Physics{
     private boolean tangentCollision(Vec2 midPoint, Vec2 edgePoint,Vec2 carEdgePoint){
         Vec2 normalVec = midPoint.sub(edgePoint);
         //MODIFIQUEI
-        //normalVec.normalize();
+        normalVec.normalize();
         
         Vec2 relCarMidPt = carEdgePoint.sub(edgePoint);
-        //relCarMidPt.normalize();
+        relCarMidPt.normalize();
         double absRad = Math.abs(normalVec.angle(relCarMidPt));
         double angThresrold = Vec2.PI/2;
         if(absRad > angThresrold){
-            //carProp.debugEdPointCar = carEdgePoint;
-            //carProp.debugEdPointRoad = edgePoint;
-            //carProp.isDebugCrash = true;
+//            carProp.debugEdPointCar = carEdgePoint;
+//            carProp.debugEdPointRoad = edgePoint;
+//            carProp.isDebugCrash = true;
             return true;
         }
         
@@ -170,7 +170,6 @@ public class Physics{
     }
     
     private void calculateCarSensorStage() {
-        //MODIFIQUEI
         ArrayList<Sensor> carSensors = carProp.getSensorsVec();
         double dSensReach = 0;
         for(int i = 0; i < carSensors.size();i++){
@@ -200,10 +199,12 @@ public class Physics{
                 double localYCompRemainLen = Math.abs(relPosSensIniEdge.length()*Math.sin(radsSensIniToXUVec));
                 
                 double remainLenght = Math.abs(localYCompLen - localYCompRemainLen);
-                double percRemainLen = remainLenght/localYCompLen;
-                dSensReach -= percRemainLen;
+                double percRemainLen = 0;
+                if(localYCompLen != 0)percRemainLen = remainLenght/localYCompLen;
+                dSensReach = -(dSensReach + percRemainLen);
                 sens.setSensorStage((float)percRemainLen);
                 sens.setTaxSensorStage((float)dSensReach);
+                carProp.taxInfluence = carProp.getFitness()+dSensReach*CarProperties.constPunishSensor;
                 carProp.setFitness(carProp.getFitness()+dSensReach*CarProperties.constPunishSensor);
             }
         }
@@ -211,20 +212,34 @@ public class Physics{
 
     private Vec2 searchNearPointRoadEdge(Vec2 refPt){
         float nearestDist = 9999;
+        float minDistToReach = this.roadSize*1.1F;
+        boolean reachNear = false;
         Vec2 nearestPt = null;
         for(int j = 0; j < getInEdge().size();j++){
             Vec2 vecDist = refPt.sub(getInEdge().get(j));
-            if(vecDist.length() < nearestDist){
+            if(vecDist.length() < nearestDist && vecDist.length() < minDistToReach){
                 nearestDist = vecDist.length();
                 nearestPt = new Vec2(getInEdge().get(j));
+                reachNear = true;
+            }else{
+                if(reachNear){
+                    reachNear = false;
+                    break;
+                }
             }
         }
 
         for(int j = 0; j < getOutEdge().size();j++){
             Vec2 vecDist = refPt.sub(getOutEdge().get(j));
-            if(vecDist.length() < nearestDist){
+            if(vecDist.length() < nearestDist && vecDist.length() < minDistToReach){
                 nearestDist = vecDist.length();
                 nearestPt = new Vec2(getOutEdge().get(j));
+                reachNear = true;
+            }else{
+                if(reachNear){
+                    reachNear = false;
+                    break;
+                }
             }
         }
         
@@ -264,7 +279,7 @@ public class Physics{
         int id = edge.indexOf(edgeNearPt);
         Vec2 relPosSensFinEdge = new Vec2();
         relPosSensFinEdge = sensorFinPt.sub(edgeNearPt);
-
+        
         Vec2 axisUVec = null;
         if(id+1 != edge.size()) axisUVec = edge.get(id+1).sub(edgeNearPt);
         else axisUVec = edgeNearPt.sub(edge.get(id-1));

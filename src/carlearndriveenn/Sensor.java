@@ -43,6 +43,14 @@ public class Sensor {
         sensorLength = 0;
         taxSensorStage = 0;
     }
+    
+    public Sensor(Sensor copy){
+        sensorStage = copy.sensorStage;
+        sensorStartPosition = copy.sensorStartPosition;
+        sensorUnitVec = new Vec2(copy.sensorUnitVec);
+        sensorLength = copy.sensorLength;
+        taxSensorStage = copy.taxSensorStage;
+    }
 
     /**
      * @return the sensorLength

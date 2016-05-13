@@ -92,6 +92,8 @@ public class NeuralNet {
                 
                 if(neuron.getNeuronType() == NeuronGene.neuron_type.output){
                     outputs.add(neuron.getOutput());
+                    if(outputs.get(outputs.size()-1).isNaN())
+                        System.out.println("");
                 }
                     
                 

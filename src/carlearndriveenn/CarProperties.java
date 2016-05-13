@@ -55,15 +55,23 @@ public class CarProperties {
     public static final double constPunishSensor = 40;
     public static double maxAngVelocity;
     
-    
+    public double dForwardInfluence;
+    public double forwardInfluence;
+    public double taxInfluence;
     
     public Vec2 debugEdPointCar;
     public Vec2 debugEdPointRoad;
     public boolean isDebugCrash;
     
+    public double debSum;
+    public double debSens;
+    
     private boolean hasCrashed;
     
     public CarProperties(float initAng, Vec2 initPos){
+        this.taxInfluence = 0;
+        this.forwardInfluence = 0;
+        this.dForwardInfluence = 0;
         sensorsVec = new ArrayList();
         position = initPos;
         this.setAngle(initAng);
@@ -83,6 +91,9 @@ public class CarProperties {
     }
     
     public CarProperties(CarProperties car){
+        this.taxInfluence = 0;
+        this.forwardInfluence = 0;
+        this.dForwardInfluence = 0;
         this.angVelocity = car.angVelocity;
         this.angle = car.angle;
         this.frontVec = new Vec2(car.frontVec);
@@ -215,7 +226,7 @@ public class CarProperties {
         float sensorIntervalAng = Vec2.PI/5;
         
         float sensParam = this.width > this.height ? this.width : this.height;
-         sensParam = 20;
+         sensParam = 30;
         float actSensAng = 0;
         while(actSensAng <= Vec2.PI){
             
@@ -228,6 +239,10 @@ public class CarProperties {
             //Vec2 sensorPt = vecActSensPt.mul(sensParam);
             sens.setSensorStartPosition(this.position.add(frontVec.mul(height)));
 
+            Double test = (double)sens.getSensorStartPosition().x;
+            if(test.isNaN()){
+                System.out.println("");
+            }
             sensorsVec.add(sens);
 
             actSensAng += sensorIntervalAng;

@@ -48,12 +48,7 @@ public class Simulator extends JFrame{
         
         Thread thDraw = new Thread(draw);
         thDraw.start();
-        
-        draw.addKeyListener(new KeyAdapter() {
-            public void KeyPressed(KeyEvent evt){
-                
-            }
-        });    
+         
         
         while(draw.getVecInBorder().size() == 0 && draw.getVecOutBorder().size() == 0 ){
             try{

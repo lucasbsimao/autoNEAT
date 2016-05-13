@@ -131,7 +131,7 @@ class Drawing extends JPanel implements Runnable{
         
         float loadingStreet = 0;
         while(loadingStreet < streetLenght){
-            loadingStreet += carProp.getWidth() < carProp.getHeight() ? carProp.getHeight()/2 : carProp.getWidth()/2;
+            loadingStreet += carProp.getWidth() < carProp.getHeight() ? carProp.getHeight()/3 : carProp.getWidth()/3;
             if(loadingStreet >= streetLenght)
                 loadingStreet = streetLenght;
             
