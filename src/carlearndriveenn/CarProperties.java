@@ -170,7 +170,7 @@ public class CarProperties {
         float rayMotion = incTan*minVel+height/2;
             
         float centVelocity = (left + right)/2;
-        this.linVelocity = frontVec.mul(centVelocity);//new Vec2(frontVec.mul(centVelocity).x+linVelocity.y,frontVec.mul(centVelocity).x+linVelocity.y);
+        this.linVelocity = frontVec.mul(centVelocity);
         
         float ray = (maxVel/minVel - 1)/(height/2);
         ray += height/2;
@@ -178,8 +178,6 @@ public class CarProperties {
         if(right < left) centVelocity *= -1;
         
         this.angVelocity = centVelocity/(rayMotion);
-        //if(this.angVelocity > maxVelocity/(height/2)) this.angVelocity = (float)maxVelocity/(height/2);
-        //if(this.angVelocity < maxVelocity/(height/2)) this.angVelocity = (float)-maxVelocity/(height/2);
     }
 
     /**
