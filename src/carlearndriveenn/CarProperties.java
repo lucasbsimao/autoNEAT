@@ -42,8 +42,8 @@ public class CarProperties {
     private double fitness;
     private boolean champion;
     
-    private final double stepVelocity = 0.5;
-    private final double maxVelocity = 20;
+    private final double stepVelocity = 0.25;
+    private final double maxVelocity = 15;
     
     public double getMaxVelocity(){
         return maxVelocity;
@@ -52,7 +52,7 @@ public class CarProperties {
     private double velLeft;
     private double velRight;
     
-    public static final double constPunishSensor = 40;
+    public static final double constPunishSensor = 10;
     public static double maxAngVelocity;
     
     public double dForwardInfluence;
@@ -155,13 +155,13 @@ public class CarProperties {
         velLeft += left;
         velRight += right;
         
-        if(velLeft > maxVelocity) velLeft = maxVelocity;
-        if(velRight > maxVelocity) velRight = maxVelocity;
-        if(velLeft < -maxVelocity) velLeft = -maxVelocity;
-        if(velRight < -maxVelocity) velRight = -maxVelocity;
-        
         left = (float)(velLeft*stepVelocity);
         right = (float)(velRight*stepVelocity);
+        
+        if(left > maxVelocity) velLeft = maxVelocity;
+        if(right > maxVelocity) velRight = maxVelocity;
+        if(left < -maxVelocity) velLeft = -maxVelocity;
+        if(right < -maxVelocity) velRight = -maxVelocity;
         
         float maxVel = left > right ? left : right;
         float minVel = left < right ? left : right;
@@ -171,10 +171,6 @@ public class CarProperties {
             
         float centVelocity = (left + right)/2;
         this.linVelocity = frontVec.mul(centVelocity);
-        
-        float ray = (maxVel/minVel - 1)/(height/2);
-        ray += height/2;
-        
         if(right < left) centVelocity *= -1;
         
         this.angVelocity = centVelocity/(rayMotion);
@@ -224,7 +220,7 @@ public class CarProperties {
         float sensorIntervalAng = Vec2.PI/5;
         
         float sensParam = this.width > this.height ? this.width : this.height;
-         sensParam = 30;
+         sensParam = 25;
         float actSensAng = 0;
         while(actSensAng <= Vec2.PI){
             

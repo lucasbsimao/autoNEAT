@@ -170,7 +170,7 @@ public class LearnDriveENN {
                                 offspring = new Genome(g1);
                             }
                         }
-                    }
+                    
                     
                     
                     if(offspring != null)offspring.setGenId(nextGenomeId);
@@ -197,19 +197,22 @@ public class LearnDriveENN {
 
                     offspring.mutateActvationResponse(activationMutRate, maxActivationPerturbation);
                     
+                    
+                    }
                     offspring.sortGenes();
                     
                     newPop.add(offspring);
                     
                     numSpawned++;
                     
+                    if(numSpawned == maxNumSpawned)
+                        numToSpawn = 0;
                 }
             }
         }
         
         shuffleGenomesById();
 
-        System.out.println("Pop:" + numSpawned);
         if(maxNumSpawned > numSpawned){
             int delta = maxNumSpawned - numSpawned;
             while(delta != 0){

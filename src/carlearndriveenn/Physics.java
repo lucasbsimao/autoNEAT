@@ -74,7 +74,8 @@ public class Physics{
     private void calculateCarPosition(float timeStep){
         Vec2 deltaPosition = carProp.getLinVelocity().mul(timeStep);
         carProp.setPosition(carProp.getPosition().add(deltaPosition));
-        
+        carProp.taxInfluence += deltaPosition.length();
+        //System.out.println("delta: " + deltaPosition.length());
         float deltaAngle = carProp.getAngVelocity()*timeStep;
         //System.out.println("Physics:\t" + carProp.getAngle() + "\t" + deltaAngle);
         carProp.setAngle(carProp.getAngle()+(float)Math.toDegrees(deltaAngle));
@@ -201,10 +202,12 @@ public class Physics{
                 double remainLenght = Math.abs(localYCompLen - localYCompRemainLen);
                 double percRemainLen = 0;
                 if(localYCompLen != 0)percRemainLen = remainLenght/localYCompLen;
+                if(percRemainLen > 1) 
+                    percRemainLen = 1;
                 dSensReach = -(dSensReach + percRemainLen);
                 sens.setSensorStage((float)percRemainLen);
                 sens.setTaxSensorStage((float)dSensReach);
-                carProp.taxInfluence = carProp.getFitness()+dSensReach*CarProperties.constPunishSensor;
+                //carProp.taxInfluence = carProp.getFitness()+dSensReach*CarProperties.constPunishSensor;
                 carProp.setFitness(carProp.getFitness()+dSensReach*CarProperties.constPunishSensor);
             }
         }

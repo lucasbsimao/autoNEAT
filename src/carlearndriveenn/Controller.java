@@ -76,16 +76,16 @@ public class Controller implements Runnable{
         }catch(Exception ex){
             
         }
-        System.out.println("MAX ID: " + maxId);
+        System.out.println("Max Fitness ("+ maxId + ") :" + fitness.get(maxId));
         return listNets.get(maxId);
     }
     
     private ArrayList<Double> calculateNetsFitness(){
         ArrayList<Double> listFitness = new ArrayList<>();
         double minScore = 999999;
-        
+        ArrayList<Double> distTraveled = new ArrayList<>();
         for(int i = 0; i < listNets.size();i++){
-            System.out.println("Pop net:" + i);
+            //System.out.println("POP NET:" + i);
             CarProperties carTest = new CarProperties(0,new Vec2(160,60));
             carTest.setCarDimensions(carProp.getWidth(), carProp.getHeight());
             Physics physicsTest = new Physics(carTest, physics.getInEdge(), physics.getOutEdge(), physics.getMidPoints(), physics.getRoadSize());
@@ -94,8 +94,8 @@ public class Controller implements Runnable{
             int cont = 0;
             
             double dSum = 0;
+            double debugSum = 0;
             while(!carTest.isCrashed()){
-
                 ArrayList<Double> inputs = new ArrayList<>(carTest.getTaxSensorStages());
                 inputs.addAll(new ArrayList(carTest.getSensorStages()));
                 inputs.add((double)carTest.getLinVelocity().length()/carProp.getMaxVelocity());
@@ -104,9 +104,9 @@ public class Controller implements Runnable{
                 ArrayList<Double> outputs = listNets.get(i).feed(inputs, NeuralNet.run_type.active);
 
                 carTest.setWheelVelocities(outputs.get(0).floatValue(), outputs.get(1).floatValue());
-
-                physicsTest.stepSimulation((float)(1/GAME_HERTZ));
                 Vec2 dDistTraveledVec = carTest.getLinVelocity().mul((float)(1/GAME_HERTZ));
+                physicsTest.stepSimulation((float)(1/GAME_HERTZ));
+                
                 double dDistTraveled =  dDistTraveledVec.length();
                 Vec2 uDirRoad = new Vec2(physicsTest.calculateRoadDirection(carTest.getPosition()));
                 double angle = uDirRoad.angle(carTest.getFrontVector());
@@ -116,17 +116,20 @@ public class Controller implements Runnable{
                     forwardFactor = 2000;
 
                 if(angle > Vec2.PI/1.5){
-                    //totalSum -=2000;
                     break;
                 }
                 
                 double sum = 0;
                 if(!carTest.isCrashed()){ 
-                    double atrr = dDistTraveled*Math.cos(angle)*forwardFactor;
-                    sum += atrr;
+                    double atrr = dDistTraveled*Math.cos(angle);
+                    carTest.forwardInfluence += atrr;
+                    sum += atrr*forwardFactor;
+                    debugSum += dDistTraveled;
                 }
                 
-                carTest.forwardInfluence += sum;
+                //System.out.println("debug: " + debugSum + "\n");
+
+                
                 
                 totalSum += sum;
                 double dSumFactor = 50;
@@ -160,20 +163,26 @@ public class Controller implements Runnable{
                 Logger.getLogger(Controller.class.getName()).log(Level.SEVERE, null, ex);
             }
             
+            //distTraveled.add(carTest.taxInfluence);
+            
             System.out.println("Influences:");
             System.out.println("Tax -> " + carTest.taxInfluence);
             System.out.println("For -> " + carTest.forwardInfluence);
-            System.out.println("dFor -> " + carTest.dForwardInfluence + "\n");
+            //System.out.println("dFor -> " + carTest.dForwardInfluence + "\n");
         }
         int size = listFitness.size();
         
         ArrayList<Double> listTemp = new ArrayList<>();
+        double summing = 0;
         for(int i = 0;i < size;i++){
             double total = listFitness.get(i)+Math.abs(minScore);
             listTemp.add(total);
             //System.out.println("ID(" + i + "):" + listFitness.get(i));
+            summing += total;
         }
         listFitness = listTemp;
+        
+        System.out.println("Average Fitness: " + summing/size);
         
         return listFitness;
     }
@@ -196,10 +205,13 @@ public class Controller implements Runnable{
             while( now - lastUpdateTime > TIME_BETWEEN_UPDATES)
             {
                 if(carProp.isCrashed()){
+                    System.out.println("Car Dist: " + carProp.taxInfluence);
+                    cont = 0;
                     System.out.println("\nPróximo:(" + actGeneration + ")");
                     neuralNet = runAlgorithm();
                     //if(actGeneration >= numGenerations)
                         carProp.setCrashed(false);
+                        carProp.taxInfluence = 0;
                     actGeneration++;
                 }else{  
                     ArrayList<Double> inputs = new ArrayList<>(carProp.getTaxSensorStages());
