@@ -11,22 +11,23 @@ You can edit the road to test the algorithm thou diferent paths. In Drawing.java
 
 ```java
 private void createPath(){
-...
-midPoints.add(new Vec2(140,60));
-        try{
-            //addRoadSegment(float lenghtRoadStraight, float radiusCurve, float curveDegree);
-            addRoadSegment(300, 70, 90);
-            addRoadSegment(300, 50, 90);
-            addRoadSegment(200, 80, 180);
-            addRoadSegment(30, 50,-180);
+    ...
+    midPoints.add(new Vec2(140,60));
+    try{
+        //addRoadSegment(float lenghtRoadStraight, float radiusCurve, float curveDegree);
+        addRoadSegment(300, 70, 90);
+        addRoadSegment(300, 50, 90);
+        addRoadSegment(200, 80, 180);
+        addRoadSegment(30, 50,-180);
 
-            
-            createBorders();
-            createFinishBorders();
-            
-        }catch(Exception ex){
-            System.out.println(ex.toString());
-        } 
+        
+        createBorders();
+        createFinishBorders();
+        
+    }catch(Exception ex){
+        System.out.println(ex.toString());
+    } 
+    ...
 }
 ```
 
