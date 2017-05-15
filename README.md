@@ -19,7 +19,6 @@ private void createPath(){
         addRoadSegment(300, 50, 90);
         addRoadSegment(200, 80, 180);
         addRoadSegment(30, 50,-180);
-
         
         createBorders();
         createFinishBorders();
