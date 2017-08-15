@@ -127,17 +127,12 @@ public class Controller implements Runnable{
                     debugSum += dDistTraveled;
                 }
                 
-                //System.out.println("debug: " + debugSum + "\n");
-
-                
-                
                 totalSum += sum;
                 double dSumFactor = 50;
                 dSum = sum - dSum;
                 
                 carTest.dForwardInfluence += dSum*dSumFactor;
-                //totalSum += dSum*dSumFactor;
-                
+
                 Vec2 disloc = new Vec2(carProp.getPosition().x - 160, carProp.getPosition().y - 60);
                 
                 if(testTimeLeft < cont && disloc.length() < 15){
@@ -152,7 +147,6 @@ public class Controller implements Runnable{
             listFitness.add(totalSum+carTest.getFitness());
             double totalScore = totalSum+carTest.getFitness();
             
-            //System.out.println("total:" + totalScore);
             
             if(minScore > totalScore)
                 minScore = totalScore;
@@ -163,12 +157,10 @@ public class Controller implements Runnable{
                 Logger.getLogger(Controller.class.getName()).log(Level.SEVERE, null, ex);
             }
             
-            //distTraveled.add(carTest.taxInfluence);
-            
             System.out.println("Influences:");
             System.out.println("Tax -> " + carTest.taxInfluence);
             System.out.println("For -> " + carTest.forwardInfluence);
-            //System.out.println("dFor -> " + carTest.dForwardInfluence + "\n");
+            
         }
         int size = listFitness.size();
         
@@ -177,7 +169,7 @@ public class Controller implements Runnable{
         for(int i = 0;i < size;i++){
             double total = listFitness.get(i)+Math.abs(minScore);
             listTemp.add(total);
-            //System.out.println("ID(" + i + "):" + listFitness.get(i));
+
             summing += total;
         }
         listFitness = listTemp;

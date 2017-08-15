@@ -297,34 +297,6 @@ public class Physics{
         return axisUVec;
     }
 
-//    @Override
-//    public void run() {
-//        final double GAME_HERTZ = 30.0;
-//        final double TIME_BETWEEN_UPDATES = 1000000000 / GAME_HERTZ;
-//        double lastUpdateTime = System.nanoTime();
-//        double lastRenderTime = System.nanoTime();
-//        final double TARGET_FPS = 60;
-//        final double TARGET_TIME_BETWEEN_RENDERS = 1000000000 / TARGET_FPS;
-//      
-//        while (true)
-//        {
-//            double now = System.nanoTime();
-//
-//            while( now - lastUpdateTime > TIME_BETWEEN_UPDATES)
-//            {
-//                stepSimulation((float)(1/GAME_HERTZ));
-//                setCompleteStep(true);
-//                lastRenderTime = now;
-//                while ( now - lastRenderTime < TARGET_TIME_BETWEEN_RENDERS)
-//                {
-//                   Thread.yield();
-//                   try {Thread.sleep(1);} catch(Exception e) {} 
-//                   now = System.nanoTime();
-//                }
-//            }
-//        }
-//    }
-
     /**
      * @return the completeStep
      */
