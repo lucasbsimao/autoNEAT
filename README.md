@@ -39,6 +39,7 @@ Each colision gives an penalty of -800, while the positive score is calculate by
 
 It usually takes 2 or 3 epochs to complete the circuit. An example is seeing below:
 
+| Epoch | Result |
 | ------------- |:-------------:|
 | Epoch 1 | ![Method-0](https://github.com/lucasbsimao/autoNEAT/blob/master/Images/project/evolv-car.png) |
 | Epoch 2 | ![Method-0](https://github.com/lucasbsimao/autoNEAT/blob/master/Images/project/evolv-car2.png) |
