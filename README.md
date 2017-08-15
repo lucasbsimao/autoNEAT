@@ -1,7 +1,7 @@
 # autoNEAT
 
 This is an algorithm to make a car learn to drive by NEAT (Neural Evolution by Augmenting Topology).
-The goal of the algorithm is make the car reach the finish line:
+The goal of the algorithm is make the car reach the finish line.
 
 ![NEAT](https://github.com/lucasbsimao/autoNEAT/blob/master/Images/project/car.png)
 ![NEAT](https://github.com/lucasbsimao/autoNEAT/blob/master/Images/project/car2.png)
