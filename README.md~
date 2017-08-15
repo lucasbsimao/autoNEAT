@@ -1,10 +1,9 @@
-# autoNEAT
+# NEAT-for-autonomous-car
 
 This is an algorithm to make a car learn to drive by NEAT (Neural Evolution by Augmenting Topology).
 The goal of the algorithm is make the car reach the finish line:
 
-![NEAT](https://github.com/lucasbsimao/autoNEAT/blob/master/Images/project/car.png)
-![NEAT](https://github.com/lucasbsimao/autoNEAT/blob/master/Images/project/car2.png)
+![NEAT](https://cloud.githubusercontent.com/assets/12956069/15630626/7ccfb3c0-2519-11e6-9372-501b6dcc05a5.png)
 
 ## Editing the road
 
@@ -37,8 +36,4 @@ The algorithm uses the six sensors in the agent, shown in the figure above, to d
 
 Each colision gives an penalty of -800, while the positive score is calculate by how much the agent moved towards finish line direction.
 
-It usually takes 2 or 3 epochs to complete the circuit. An example is seeing below:
-
-| Epoch 1| ![Method-0](https://github.com/lucasbsimao/autoNEAT/blob/master/Images/project/evolv-car.png) |
-| Epoch 2| ![Method-0](https://github.com/lucasbsimao/autoNEAT/blob/master/Images/project/evolv-car2.png) |
-| Epoch 3| ![Method-0](https://github.com/lucasbsimao/autoNEAT/blob/master/Images/project/evolv-car3.png) |
+It usually takes 2 or 3 epochs to complete the circuit.
